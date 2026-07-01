@@ -350,6 +350,7 @@ export const GetCamisetaDetalleResponse = zod.object({
   "inventarioId": zod.number(),
   "talla": zod.enum(['S', 'M', 'L', 'XL', 'XXL', 'XXXL']),
   "cantidadDisponible": zod.number(),
+  "expuesto": zod.boolean(),
   "costoUnidad": zod.number(),
   "precioVenta": zod.number(),
   "utilidadProyectada": zod.number(),

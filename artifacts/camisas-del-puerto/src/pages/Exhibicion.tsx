@@ -1,44 +1,19 @@
 import { useMemo, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  useListInventario,
-  useSetExposicion,
-  useResetExposicion,
-} from "@workspace/api-client-react";
-import type { InventarioItem } from "@workspace/api-client-react";
-import { Store, Archive, Search, Shirt, Briefcase } from "lucide-react";
+import { useListInventario } from "@workspace/api-client-react";
+import { Store, Search, Shirt, Briefcase } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { apiErrorMessage, resolveImg } from "@/lib/format";
+import { resolveImg } from "@/lib/format";
 import { PageHeader } from "@/components/layout/PageHeader";
 
 type Filtro = "todas" | "exhibicion" | "maleta";
 
 export default function Exhibicion() {
-  const qc = useQueryClient();
-  const { toast } = useToast();
   const { data, isLoading } = useListInventario();
-  const setExpo = useSetExposicion();
-  const reset = useResetExposicion();
 
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [q, setQ] = useState("");
-  const [confirmReset, setConfirmReset] = useState(false);
-  const [pendingId, setPendingId] = useState<number | null>(null);
 
   const items = useMemo(
     () => (data ?? []).filter((i) => i.cantidadDisponible > 0),
@@ -63,42 +38,6 @@ export default function Exhibicion() {
     });
   }, [items, filtro, q]);
 
-  const toggle = (item: InventarioItem, next: boolean) => {
-    setPendingId(item.id);
-    setExpo.mutate(
-      { id: item.id, data: { expuesto: next } },
-      {
-        onSuccess: () => qc.invalidateQueries(),
-        onError: (e) =>
-          toast({
-            title: "Error",
-            description: apiErrorMessage(e, "No se pudo actualizar"),
-            variant: "destructive",
-          }),
-        onSettled: () => setPendingId(null),
-      },
-    );
-  };
-
-  const doReset = () => {
-    reset.mutate(undefined, {
-      onSuccess: (r) => {
-        qc.invalidateQueries();
-        setConfirmReset(false);
-        toast({
-          title: "Todo guardado en maletas",
-          description: `${r.actualizados} línea(s) volvieron a su maleta.`,
-        });
-      },
-      onError: (e) =>
-        toast({
-          title: "Error",
-          description: apiErrorMessage(e, "No se pudo cerrar el día"),
-          variant: "destructive",
-        }),
-    });
-  };
-
   const filtros: { key: Filtro; label: string }[] = [
     { key: "todas", label: "Todas" },
     { key: "exhibicion", label: "En exhibición" },
@@ -110,17 +49,14 @@ export default function Exhibicion() {
       <PageHeader
         title="Exhibición"
         icon={Store}
-        subtitle="Dónde están las camisetas hoy"
-      >
-        <Button
-          variant="secondary"
-          className="gap-2"
-          disabled={enExhibicion === 0 || reset.isPending}
-          onClick={() => setConfirmReset(true)}
-        >
-          <Archive className="h-4 w-4" /> Guardar todo en maletas
-        </Button>
-      </PageHeader>
+        subtitle="Vista de dónde están las camisetas hoy"
+      />
+
+      <p className="text-sm text-muted-foreground -mt-2">
+        Solo lectura. La exhibición se maneja desde cada camiseta (Desglose por
+        talla), y se guarda todo en maletas al cerrar la tienda desde el
+        Resumen.
+      </p>
 
       <div className="grid grid-cols-2 gap-3">
         <Card className="bg-card border-card-border">
@@ -225,29 +161,16 @@ export default function Exhibicion() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between border-t border-border pt-3">
-                    <div>
-                      {i.expuesto ? (
-                        <Badge className="bg-primary/15 text-primary hover:bg-primary/15 gap-1">
-                          <Store className="h-3 w-3" /> En exhibición
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="gap-1">
-                          <Briefcase className="h-3 w-3" />{" "}
-                          {i.codigoMaleta ?? "Maleta"}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">
-                        Exhibida
-                      </span>
-                      <Switch
-                        checked={i.expuesto}
-                        disabled={pendingId === i.id}
-                        onCheckedChange={(v) => toggle(i, v)}
-                        aria-label={`Exhibir ${i.nombreEquipo} ${i.talla}`}
-                      />
-                    </div>
+                    {i.expuesto ? (
+                      <Badge className="bg-primary/15 text-primary hover:bg-primary/15 gap-1">
+                        <Store className="h-3 w-3" /> En exhibición
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="gap-1">
+                        <Briefcase className="h-3 w-3" />{" "}
+                        {i.codigoMaleta ?? "Maleta"}
+                      </Badge>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -255,24 +178,6 @@ export default function Exhibicion() {
           })}
         </div>
       )}
-
-      <AlertDialog open={confirmReset} onOpenChange={setConfirmReset}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Guardar todo en maletas</AlertDialogTitle>
-            <AlertDialogDescription>
-              Se marcarán las {enExhibicion} línea(s) en exhibición como
-              guardadas en su maleta. Úsalo al cerrar la caja al final del día.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={doReset} disabled={reset.isPending}>
-              Guardar todo
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

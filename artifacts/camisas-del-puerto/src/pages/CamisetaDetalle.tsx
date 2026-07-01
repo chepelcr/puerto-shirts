@@ -7,6 +7,7 @@ import {
   useListLotes,
   useIngresarInventario,
   useTrasladarInventario,
+  useSetExposicion,
   Talla,
 } from "@workspace/api-client-react";
 import type { DesgloseTalla } from "@workspace/api-client-react";
@@ -30,6 +31,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   ArrowLeft,
   ImageIcon,
@@ -37,6 +39,8 @@ import {
   ArrowLeftRight,
   ShoppingCart,
   Check,
+  Store,
+  Briefcase,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiErrorMessage, money, resolveImg } from "@/lib/format";
@@ -59,8 +63,27 @@ export default function CamisetaDetalle() {
 
   const ingresar = useIngresarInventario();
   const trasladar = useTrasladarInventario();
+  const setExpo = useSetExposicion();
+  const [expoPendingId, setExpoPendingId] = useState<number | null>(null);
 
   const invalidate = () => qc.invalidateQueries();
+
+  const toggleExpo = (item: DesgloseTalla, next: boolean) => {
+    setExpoPendingId(item.inventarioId);
+    setExpo.mutate(
+      { id: item.inventarioId, data: { expuesto: next } },
+      {
+        onSuccess: () => invalidate(),
+        onError: (e) =>
+          toast({
+            title: "Error",
+            description: apiErrorMessage(e, "No se pudo actualizar"),
+            variant: "destructive",
+          }),
+        onSettled: () => setExpoPendingId(null),
+      },
+    );
+  };
 
   // Ingreso form (camiseta fija por contexto)
   const [openIngreso, setOpenIngreso] = useState(false);
@@ -416,6 +439,29 @@ export default function CamisetaDetalle() {
                       <span className="text-primary font-medium">
                         Utilidad {money(d.utilidadProyectada)}
                       </span>
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-border pt-3">
+                      {d.expuesto ? (
+                        <Badge className="bg-primary/15 text-primary hover:bg-primary/15 gap-1">
+                          <Store className="h-3 w-3" /> En exhibición
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="gap-1">
+                          <Briefcase className="h-3 w-3" /> {d.codigoMaleta}
+                        </Badge>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          Exhibida
+                        </span>
+                        <Switch
+                          checked={d.expuesto}
+                          disabled={expoPendingId === d.inventarioId}
+                          onCheckedChange={(v) => toggleExpo(d, v)}
+                          aria-label={`Exhibir talla ${d.talla}`}
+                        />
+                      </div>
                     </div>
 
                     <div className="flex gap-2 pt-1">

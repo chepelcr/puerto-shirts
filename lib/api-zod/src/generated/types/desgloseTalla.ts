@@ -11,6 +11,7 @@ export interface DesgloseTalla {
   inventarioId: number;
   talla: Talla;
   cantidadDisponible: number;
+  expuesto: boolean;
   costoUnidad: number;
   precioVenta: number;
   utilidadProyectada: number;

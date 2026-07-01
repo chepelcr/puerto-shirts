@@ -1,11 +1,53 @@
 import { Link } from "wouter";
-import { useGetDashboardResumen } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useGetDashboardResumen,
+  useListInventario,
+  useResetExposicion,
+} from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shirt, Package, DollarSign, AlertTriangle } from "lucide-react";
-import { money } from "@/lib/format";
+import { Shirt, Package, DollarSign, AlertTriangle, Store } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { apiErrorMessage, money } from "@/lib/format";
 
 export default function Dashboard() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
   const { data: resumen, isLoading } = useGetDashboardResumen();
+  const { data: inventario } = useListInventario();
+  const reset = useResetExposicion();
+
+  const enExhibicion = (inventario ?? []).filter((i) => i.expuesto).length;
+
+  const cerrarTienda = () => {
+    reset.mutate(undefined, {
+      onSuccess: (r) => {
+        qc.invalidateQueries();
+        toast({
+          title: "Tienda cerrada",
+          description: `${r.actualizados} línea(s) volvieron a su maleta.`,
+        });
+      },
+      onError: (e) =>
+        toast({
+          title: "Error",
+          description: apiErrorMessage(e, "No se pudo cerrar la tienda"),
+          variant: "destructive",
+        }),
+    });
+  };
 
   if (isLoading) {
     return <div className="text-muted-foreground p-8 animate-pulse text-center">Cargando dashboard...</div>;
@@ -15,7 +57,36 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-display text-foreground tracking-tight">Resumen General</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-display text-foreground tracking-tight">Resumen General</h1>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="secondary"
+              className="gap-2"
+              disabled={enExhibicion === 0 || reset.isPending}
+            >
+              <Store className="h-4 w-4" /> Cerrar tienda
+              {enExhibicion > 0 ? ` (${enExhibicion})` : ""}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Cerrar tienda</AlertDialogTitle>
+              <AlertDialogDescription>
+                Se guardarán las {enExhibicion} línea(s) en exhibición de vuelta
+                en su maleta. Úsalo al cerrar la caja al final del día.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={cerrarTienda} disabled={reset.isPending}>
+                Cerrar tienda
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-card border-card-border">
