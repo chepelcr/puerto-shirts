@@ -30,6 +30,8 @@ import type {
   EquipoInput,
   EquipoUpdate,
   ErrorEnvelope,
+  ExposicionInput,
+  ExposicionResultado,
   HealthStatus,
   IngresoInput,
   InventarioItem,
@@ -49,6 +51,7 @@ import type {
   ProveedorUpdate,
   ReporteVentaDiaria,
   ReporteVentaDiariaDetalle,
+  ResetExposicionResultado,
   TrasladoInput,
   TrasladoResultado,
   UploadUrlRequest,
@@ -2446,6 +2449,149 @@ export const useTrasladarInventario = <TError = ErrorType<ValidationErrorRespons
         TContext
       > => {
       return useMutation(getTrasladarInventarioMutationOptions(options));
+    }
+
+export const getSetExposicionUrl = (id: number,) => {
+
+
+
+
+  return `/api/inventario/${id}/exposicion`
+}
+
+/**
+ * Marca una fila de inventario como expuesta (en mecate/gancho) o guardada en su maleta.
+ * @summary Marcar/desmarcar camiseta en exhibición
+ */
+export const setExposicion = async (id: number,
+    exposicionInput: ExposicionInput, options?: RequestInit): Promise<ExposicionResultado> => {
+
+  return customFetch<ExposicionResultado>(getSetExposicionUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(exposicionInput)
+  }
+);}
+
+
+
+
+export const getSetExposicionMutationOptions = <TError = ErrorType<NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setExposicion>>, TError,{id: number;data: BodyType<ExposicionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setExposicion>>, TError,{id: number;data: BodyType<ExposicionInput>}, TContext> => {
+
+const mutationKey = ['setExposicion'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setExposicion>>, {id: number;data: BodyType<ExposicionInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  setExposicion(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetExposicionMutationResult = NonNullable<Awaited<ReturnType<typeof setExposicion>>>
+    export type SetExposicionMutationBody = BodyType<ExposicionInput>
+    export type SetExposicionMutationError = ErrorType<NotFoundResponse>
+
+    /**
+ * @summary Marcar/desmarcar camiseta en exhibición
+ */
+export const useSetExposicion = <TError = ErrorType<NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setExposicion>>, TError,{id: number;data: BodyType<ExposicionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setExposicion>>,
+        TError,
+        {id: number;data: BodyType<ExposicionInput>},
+        TContext
+      > => {
+      return useMutation(getSetExposicionMutationOptions(options));
+    }
+
+export const getResetExposicionUrl = () => {
+
+
+
+
+  return `/api/inventario/exposicion/reset`
+}
+
+/**
+ * Marca todas las filas de inventario como guardadas en su maleta (expuesto=false).
+ * @summary Guardar todo en maletas (fin del día)
+ */
+export const resetExposicion = async ( options?: RequestInit): Promise<ResetExposicionResultado> => {
+
+  return customFetch<ResetExposicionResultado>(getResetExposicionUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getResetExposicionMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetExposicion>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof resetExposicion>>, TError,void, TContext> => {
+
+const mutationKey = ['resetExposicion'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resetExposicion>>, void> = () => {
+
+
+          return  resetExposicion(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResetExposicionMutationResult = NonNullable<Awaited<ReturnType<typeof resetExposicion>>>
+
+    export type ResetExposicionMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Guardar todo en maletas (fin del día)
+ */
+export const useResetExposicion = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetExposicion>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof resetExposicion>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getResetExposicionMutationOptions(options));
     }
 
 export const getListKardexUrl = (params?: ListKardexParams,) => {

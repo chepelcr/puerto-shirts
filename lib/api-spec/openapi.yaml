@@ -578,6 +578,42 @@ paths:
                 $ref: "#/components/schemas/TrasladoResultado"
         "422":
           $ref: "#/components/responses/ValidationError"
+  /inventario/{id}/exposicion:
+    patch:
+      operationId: setExposicion
+      tags: [inventario]
+      summary: Marcar/desmarcar camiseta en exhibición
+      description: Marca una fila de inventario como expuesta (en mecate/gancho) o guardada en su maleta.
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExposicionInput"
+      responses:
+        "200":
+          description: Estado de exhibición actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExposicionResultado"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /inventario/exposicion/reset:
+    post:
+      operationId: resetExposicion
+      tags: [inventario]
+      summary: Guardar todo en maletas (fin del día)
+      description: Marca todas las filas de inventario como guardadas en su maleta (expuesto=false).
+      responses:
+        "200":
+          description: Exhibición reiniciada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetExposicionResultado"
 
   /kardex:
     get:
@@ -999,7 +1035,7 @@ components:
 
     InventarioItem:
       type: object
-      required: [id, camisetaId, loteId, maletaId, talla, costoUnidad, precioVenta, cantidadDisponible]
+      required: [id, camisetaId, loteId, maletaId, talla, costoUnidad, precioVenta, cantidadDisponible, expuesto]
       properties:
         id:
           type: integer
@@ -1017,6 +1053,8 @@ components:
           type: number
         cantidadDisponible:
           type: integer
+        expuesto:
+          type: boolean
         nombreEquipo:
           type: ["string", "null"]
         urlImagen:
@@ -1178,6 +1216,27 @@ components:
         inventarioDestinoId:
           type: integer
         cantidad:
+          type: integer
+
+    ExposicionInput:
+      type: object
+      required: [expuesto]
+      properties:
+        expuesto:
+          type: boolean
+    ExposicionResultado:
+      type: object
+      required: [id, expuesto]
+      properties:
+        id:
+          type: integer
+        expuesto:
+          type: boolean
+    ResetExposicionResultado:
+      type: object
+      required: [actualizados]
+      properties:
+        actualizados:
           type: integer
 
     DesgloseTalla:

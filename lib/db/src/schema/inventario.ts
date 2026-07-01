@@ -3,6 +3,7 @@ import {
   serial,
   integer,
   numeric,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -26,6 +27,7 @@ export const inventarioTable = pgTable("inventario", {
   costoUnidad: numeric("costo_unidad", { precision: 12, scale: 2 }).notNull(),
   precioVenta: numeric("precio_venta", { precision: 12, scale: 2 }).notNull(),
   cantidadDisponible: integer("cantidad_disponible").notNull().default(0),
+  expuesto: boolean("expuesto").notNull().default(false),
 });
 
 export const insertInventarioSchema = createInsertSchema(inventarioTable).omit({

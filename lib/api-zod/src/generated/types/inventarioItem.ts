@@ -16,6 +16,7 @@ export interface InventarioItem {
   costoUnidad: number;
   precioVenta: number;
   cantidadDisponible: number;
+  expuesto: boolean;
   /** @nullable */
   nombreEquipo?: string | null;
   /** @nullable */

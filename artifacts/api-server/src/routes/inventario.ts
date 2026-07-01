@@ -14,8 +14,9 @@ import {
   IngresarInventarioBody,
   RegistrarVentaBody,
   TrasladarInventarioBody,
+  SetExposicionBody,
 } from "@workspace/api-zod";
-import { num } from "../lib/http";
+import { num, parseId } from "../lib/http";
 
 const router: IRouter = Router();
 
@@ -44,6 +45,7 @@ router.get("/inventario", async (req: Request, res: Response) => {
       costoUnidad: inventarioTable.costoUnidad,
       precioVenta: inventarioTable.precioVenta,
       cantidadDisponible: inventarioTable.cantidadDisponible,
+      expuesto: inventarioTable.expuesto,
       nombreEquipo: equiposTable.nombreEquipo,
       urlImagen: camisetasTable.urlImagen,
       codigoMaleta: maletasTable.codigoMaleta,
@@ -396,6 +398,40 @@ router.post("/inventario/traslado", async (req: Request, res: Response) => {
     req.log.error({ err }, "Error registrando traslado");
     res.status(500).json({ error: "Error registrando traslado" });
   }
+});
+
+router.post("/inventario/exposicion/reset", async (_req: Request, res: Response) => {
+  const rows = await db
+    .update(inventarioTable)
+    .set({ expuesto: false })
+    .where(eq(inventarioTable.expuesto, true))
+    .returning({ id: inventarioTable.id });
+  res.json({ actualizados: rows.length });
+});
+
+router.patch("/inventario/:id/exposicion", async (req: Request, res: Response) => {
+  let id: number;
+  try {
+    id = parseId(req.params.id);
+  } catch {
+    res.status(400).json({ error: "ID inválido" });
+    return;
+  }
+  const parsed = SetExposicionBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(422).json({ error: "Datos inválidos" });
+    return;
+  }
+  const [row] = await db
+    .update(inventarioTable)
+    .set({ expuesto: parsed.data.expuesto })
+    .where(eq(inventarioTable.id, id))
+    .returning({ id: inventarioTable.id, expuesto: inventarioTable.expuesto });
+  if (!row) {
+    res.status(404).json({ error: "Inventario no encontrado" });
+    return;
+  }
+  res.json(row);
 });
 
 export default router;

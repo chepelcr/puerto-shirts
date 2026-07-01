@@ -179,6 +179,7 @@ export interface InventarioItem {
   costoUnidad: number;
   precioVenta: number;
   cantidadDisponible: number;
+  expuesto: boolean;
   /** @nullable */
   nombreEquipo?: string | null;
   /** @nullable */
@@ -277,6 +278,19 @@ export interface TrasladoResultado {
   inventarioOrigenId: number;
   inventarioDestinoId: number;
   cantidad: number;
+}
+
+export interface ExposicionInput {
+  expuesto: boolean;
+}
+
+export interface ExposicionResultado {
+  id: number;
+  expuesto: boolean;
+}
+
+export interface ResetExposicionResultado {
+  actualizados: number;
 }
 
 export interface DesgloseTalla {

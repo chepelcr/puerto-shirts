@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearch } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
+import { QRCodeCanvas } from "qrcode.react";
 import {
   useListMaletas,
   useCreateMaleta,
@@ -28,10 +30,114 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Pencil, Trash2, Briefcase, PackageOpen } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Briefcase,
+  PackageOpen,
+  QrCode,
+  Download,
+  Printer,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiErrorMessage, money, resolveImg } from "@/lib/format";
 import { PageHeader } from "@/components/layout/PageHeader";
+
+function maletaDeepLink(id: number): string {
+  const base = import.meta.env.BASE_URL || "/";
+  return `${window.location.origin}${base}maletas?ver=${id}`;
+}
+
+function QRDialog({ maleta, onClose }: { maleta: Maleta; onClose: () => void }) {
+  const canvasId = `qr-maleta-${maleta.id}`;
+  const link = maletaDeepLink(maleta.id);
+
+  const getCanvas = () =>
+    document.getElementById(canvasId) as HTMLCanvasElement | null;
+
+  const download = () => {
+    const canvas = getCanvas();
+    if (!canvas) return;
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = `QR-${maleta.codigoMaleta}.png`;
+    a.click();
+  };
+
+  const print = () => {
+    const canvas = getCanvas();
+    const dataUrl = canvas?.toDataURL("image/png");
+    if (!dataUrl) return;
+    const w = window.open("", "_blank", "width=420,height=560");
+    if (!w) return;
+
+    const doc = w.document;
+    doc.title = `QR ${maleta.codigoMaleta}`;
+    const body = doc.body;
+    body.style.cssText =
+      "margin:0;padding:32px;text-align:center;font-family:system-ui,sans-serif";
+
+    const h1 = doc.createElement("h1");
+    h1.style.cssText = "margin:0 0 4px;font-size:28px";
+    h1.textContent = maleta.codigoMaleta;
+
+    const desc = doc.createElement("p");
+    desc.style.cssText = "margin:0 0 16px;color:#555";
+    desc.textContent = maleta.descripcion ?? "";
+
+    const img = doc.createElement("img");
+    img.src = dataUrl;
+    img.style.cssText = "width:280px;height:280px";
+
+    const caption = doc.createElement("p");
+    caption.style.cssText = "margin-top:16px;font-size:13px;color:#777";
+    caption.textContent = "Escanea para ver el contenido de esta maleta";
+
+    body.append(h1, desc, img, caption);
+
+    img.addEventListener("load", () => {
+      w.focus();
+      w.print();
+    });
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>QR — {maleta.codigoMaleta}</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col items-center gap-4 py-2">
+          <div className="rounded-xl bg-white p-4">
+            <QRCodeCanvas
+              id={canvasId}
+              value={link}
+              size={220}
+              level="M"
+              includeMargin={false}
+            />
+          </div>
+          <p className="text-sm text-muted-foreground text-center">
+            Escanéalo para ver el contenido de la maleta sin abrirla.
+          </p>
+          <div className="flex gap-2 w-full">
+            <Button
+              variant="secondary"
+              className="flex-1 gap-2"
+              onClick={download}
+            >
+              <Download className="h-4 w-4" /> Descargar
+            </Button>
+            <Button className="flex-1 gap-2" onClick={print}>
+              <Printer className="h-4 w-4" /> Imprimir
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function ContenidoDialog({
   maleta,
@@ -108,6 +214,16 @@ export default function Maletas() {
   const [codigo, setCodigo] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [verContenido, setVerContenido] = useState<Maleta | null>(null);
+  const [verQR, setVerQR] = useState<Maleta | null>(null);
+
+  const search = useSearch();
+
+  useEffect(() => {
+    const ver = new URLSearchParams(search).get("ver");
+    if (!ver || !maletas) return;
+    const m = maletas.find((x) => String(x.id) === ver);
+    if (m) setVerContenido(m);
+  }, [search, maletas]);
 
   const invalidate = () => qc.invalidateQueries();
 
@@ -242,6 +358,14 @@ export default function Maletas() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    title="Código QR"
+                    onClick={() => setVerQR(m)}
+                  >
+                    <QrCode className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => openEdit(m)}
                   >
                     <Pencil className="h-4 w-4" />
@@ -266,6 +390,10 @@ export default function Maletas() {
           maleta={verContenido}
           onClose={() => setVerContenido(null)}
         />
+      )}
+
+      {verQR && (
+        <QRDialog maleta={verQR} onClose={() => setVerQR(null)} />
       )}
     </div>
   );

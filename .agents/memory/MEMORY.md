@@ -1,1 +1,1 @@
-- [TS project references need composite](ts-project-references.md) — any `lib/*` package referenced by an artifact's tsconfig must set `composite: true` or typecheck fails.
+- [Camisas del Puerto stack](camisas-del-puerto.md) — OpenAPI-first codegen flow, endpoint/hook naming, and DB push conventions for adding API endpoints.

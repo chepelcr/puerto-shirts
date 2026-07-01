@@ -8,6 +8,7 @@ import {
   Truck, 
   History,
   BarChart3,
+  Store,
   Menu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     { href: "/", label: "Dashboard", icon: Home },
     { href: "/reportes", label: "Reportes", icon: BarChart3 },
     { href: "/camisetas", label: "Camisetas", icon: Shirt },
+    { href: "/exhibicion", label: "Exhibición", icon: Store },
     { href: "/maletas", label: "Maletas", icon: Briefcase },
     { href: "/lotes", label: "Lotes", icon: Truck },
     { href: "/equipos", label: "Equipos", icon: Users },

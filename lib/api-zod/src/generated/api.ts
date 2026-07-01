@@ -476,6 +476,7 @@ export const ListInventarioResponseItem = zod.object({
   "costoUnidad": zod.number(),
   "precioVenta": zod.number(),
   "cantidadDisponible": zod.number(),
+  "expuesto": zod.boolean(),
   "nombreEquipo": zod.string().nullish(),
   "urlImagen": zod.string().nullish(),
   "codigoMaleta": zod.string().nullish(),
@@ -514,6 +515,7 @@ export const IngresarInventarioResponse = zod.object({
   "costoUnidad": zod.number(),
   "precioVenta": zod.number(),
   "cantidadDisponible": zod.number(),
+  "expuesto": zod.boolean(),
   "nombreEquipo": zod.string().nullish(),
   "urlImagen": zod.string().nullish(),
   "codigoMaleta": zod.string().nullish(),
@@ -561,6 +563,33 @@ export const TrasladarInventarioResponse = zod.object({
   "inventarioOrigenId": zod.number(),
   "inventarioDestinoId": zod.number(),
   "cantidad": zod.number()
+})
+
+
+/**
+ * Marca una fila de inventario como expuesta (en mecate/gancho) o guardada en su maleta.
+ * @summary Marcar/desmarcar camiseta en exhibición
+ */
+export const SetExposicionParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const SetExposicionBody = zod.object({
+  "expuesto": zod.boolean()
+})
+
+export const SetExposicionResponse = zod.object({
+  "id": zod.number(),
+  "expuesto": zod.boolean()
+})
+
+
+/**
+ * Marca todas las filas de inventario como guardadas en su maleta (expuesto=false).
+ * @summary Guardar todo en maletas (fin del día)
+ */
+export const ResetExposicionResponse = zod.object({
+  "actualizados": zod.number()
 })
 
 
