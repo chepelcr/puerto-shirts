@@ -201,6 +201,9 @@ export default function CamisetaDetalle() {
   }
 
   const img = resolveImg(data.urlImagen);
+  const desgloseConStock = data.desglose.filter(
+    (d) => d.cantidadDisponible > 0,
+  );
 
   return (
     <div className="space-y-6">
@@ -388,11 +391,11 @@ export default function CamisetaDetalle() {
           </Dialog>
         </div>
 
-        {!data.desglose.length ? (
-          <p className="text-muted-foreground">Sin inventario registrado.</p>
+        {!desgloseConStock.length ? (
+          <p className="text-muted-foreground">Sin inventario disponible.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {data.desglose.map((d) => {
+            {desgloseConStock.map((d) => {
               const enCarrito = cantidadDe(d.inventarioId);
               const sinStock = d.cantidadDisponible < 1;
               const topeCarrito = enCarrito >= d.cantidadDisponible;

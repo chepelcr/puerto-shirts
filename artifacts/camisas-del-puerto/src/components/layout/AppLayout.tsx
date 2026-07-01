@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { 
   Home, 
@@ -27,6 +27,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const [location] = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: Home },
@@ -48,7 +49,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           <img src="/logo.png" alt="Shark Logo" className="w-8 h-8 object-contain" />
           <span className="font-display font-bold text-lg tracking-wide text-primary">CAMISAS DEL PUERTO</span>
         </div>
-        <Sheet>
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="text-foreground">
               <Menu className="h-6 w-6" />
@@ -58,7 +59,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             <SheetHeader className="p-4 border-b border-border text-left">
               <div className="flex items-center gap-3">
                 <img src="/logo.png" alt="Shark Logo" className="w-10 h-10 object-contain" />
-                <SheetTitle className="font-display text-primary text-xl uppercase tracking-wider">Blue Book</SheetTitle>
+                <SheetTitle className="font-display text-primary text-xl uppercase tracking-wider">Camisas del Puerto</SheetTitle>
               </div>
               <p className="text-xs text-muted-foreground mt-1 font-medium">La pasión del fútbol en cada lote.</p>
             </SheetHeader>
@@ -66,7 +67,7 @@ export function AppLayout({ children }: AppLayoutProps) {
               {navItems.map((item) => {
                 const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
                 return (
-                  <Link key={item.href} href={item.href}>
+                  <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}>
                     <div className={`flex items-center gap-3 px-6 py-3 text-sm font-medium transition-colors ${isActive ? "text-primary bg-primary/10 border-r-2 border-primary" : "text-muted-foreground hover:text-foreground hover:bg-white/5"}`}>
                       <item.icon className="h-5 w-5" />
                       {item.label}
