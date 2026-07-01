@@ -354,7 +354,9 @@ export const GetCamisetaDetalleResponse = zod.object({
   "precioVenta": zod.number(),
   "utilidadProyectada": zod.number(),
   "maletaId": zod.number(),
-  "codigoMaleta": zod.string()
+  "codigoMaleta": zod.string(),
+  "loteId": zod.number(),
+  "nombreProveedor": zod.string().nullish()
 }))
 })
 

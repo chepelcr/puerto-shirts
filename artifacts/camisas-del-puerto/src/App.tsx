@@ -7,7 +7,6 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Camisetas from "@/pages/Camisetas";
 import CamisetaDetalle from "@/pages/CamisetaDetalle";
-import Inventario from "@/pages/Inventario";
 import Maletas from "@/pages/Maletas";
 import Lotes from "@/pages/Lotes";
 import Equipos from "@/pages/Equipos";
@@ -30,7 +29,6 @@ function Router() {
         <Route path="/" component={Dashboard} />
         <Route path="/camisetas" component={Camisetas} />
         <Route path="/camisetas/:id" component={CamisetaDetalle} />
-        <Route path="/inventario" component={Inventario} />
         <Route path="/maletas" component={Maletas} />
         <Route path="/lotes" component={Lotes} />
         <Route path="/equipos" component={Equipos} />

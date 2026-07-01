@@ -6,6 +6,8 @@ import {
   equiposTable,
   inventarioTable,
   maletasTable,
+  lotesTable,
+  proveedoresTable,
 } from "@workspace/db";
 import { CreateCamisetaBody, UpdateCamisetaBody } from "@workspace/api-zod";
 import { num, parseId } from "../lib/http";
@@ -89,9 +91,16 @@ router.get("/camisetas/:id/detalle", async (req: Request, res: Response) => {
       precioVenta: inventarioTable.precioVenta,
       maletaId: inventarioTable.maletaId,
       codigoMaleta: maletasTable.codigoMaleta,
+      loteId: inventarioTable.loteId,
+      nombreProveedor: proveedoresTable.nombre,
     })
     .from(inventarioTable)
     .innerJoin(maletasTable, eq(inventarioTable.maletaId, maletasTable.id))
+    .innerJoin(lotesTable, eq(inventarioTable.loteId, lotesTable.id))
+    .innerJoin(
+      proveedoresTable,
+      eq(lotesTable.proveedorId, proveedoresTable.id),
+    )
     .where(eq(inventarioTable.camisetaId, id));
 
   let totalUnidades = 0;
@@ -111,6 +120,8 @@ router.get("/camisetas/:id/detalle", async (req: Request, res: Response) => {
       utilidadProyectada: utilidad,
       maletaId: l.maletaId,
       codigoMaleta: l.codigoMaleta,
+      loteId: l.loteId,
+      nombreProveedor: l.nombreProveedor,
     };
   });
 

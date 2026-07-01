@@ -1054,7 +1054,7 @@ components:
 
     DesgloseTalla:
       type: object
-      required: [inventarioId, talla, cantidadDisponible, costoUnidad, precioVenta, utilidadProyectada, codigoMaleta, maletaId]
+      required: [inventarioId, talla, cantidadDisponible, costoUnidad, precioVenta, utilidadProyectada, codigoMaleta, maletaId, loteId]
       properties:
         inventarioId:
           type: integer
@@ -1072,6 +1072,10 @@ components:
           type: integer
         codigoMaleta:
           type: string
+        loteId:
+          type: integer
+        nombreProveedor:
+          type: ["string", "null"]
 
     CamisetaDetalle:
       type: object

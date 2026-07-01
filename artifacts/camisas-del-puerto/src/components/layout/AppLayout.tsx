@@ -3,7 +3,6 @@ import { Link, useLocation } from "wouter";
 import { 
   Home, 
   Shirt, 
-  Package, 
   Briefcase, 
   Users, 
   Truck, 
@@ -29,7 +28,6 @@ export function AppLayout({ children }: AppLayoutProps) {
   const navItems = [
     { href: "/", label: "Dashboard", icon: Home },
     { href: "/camisetas", label: "Camisetas", icon: Shirt },
-    { href: "/inventario", label: "Inventario", icon: Package },
     { href: "/maletas", label: "Maletas", icon: Briefcase },
     { href: "/lotes", label: "Lotes", icon: Truck },
     { href: "/equipos", label: "Equipos", icon: Users },

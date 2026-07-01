@@ -1,7 +1,35 @@
+import { useState } from "react";
 import { Link, useParams } from "wouter";
-import { useGetCamisetaDetalle } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useGetCamisetaDetalle,
+  useListMaletas,
+  useListLotes,
+  useIngresarInventario,
+  useRegistrarVenta,
+  useTrasladarInventario,
+  Talla,
+} from "@workspace/api-client-react";
+import type { DesgloseTalla } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -11,15 +39,161 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ImageIcon } from "lucide-react";
-import { money, resolveImg } from "@/lib/format";
+import {
+  ArrowLeft,
+  ImageIcon,
+  Plus,
+  DollarSign,
+  ArrowLeftRight,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiErrorMessage, money, resolveImg } from "@/lib/format";
 
+const TALLAS: Talla[] = ["S", "M", "L", "XL", "XXL", "XXXL"];
 const STOCK_BAJO = 3;
 
 export default function CamisetaDetalle() {
   const params = useParams();
   const id = Number(params.id);
+  const qc = useQueryClient();
+  const { toast } = useToast();
+
   const { data, isLoading } = useGetCamisetaDetalle(id);
+  const { data: maletas } = useListMaletas();
+  const { data: lotes } = useListLotes();
+
+  const ingresar = useIngresarInventario();
+  const vender = useRegistrarVenta();
+  const trasladar = useTrasladarInventario();
+
+  const invalidate = () => qc.invalidateQueries();
+
+  // Ingreso form (camiseta fija por contexto)
+  const [openIngreso, setOpenIngreso] = useState(false);
+  const [ing, setIng] = useState({
+    loteId: "",
+    maletaId: "",
+    talla: "M" as Talla,
+    costoUnidad: "",
+    precioVenta: "",
+    cantidad: "",
+  });
+
+  const precioInvalido =
+    ing.precioVenta !== "" &&
+    ing.costoUnidad !== "" &&
+    Number(ing.precioVenta) <= Number(ing.costoUnidad);
+
+  const openIngresoDialog = () => {
+    setIng({
+      loteId: "",
+      maletaId: "",
+      talla: "M",
+      costoUnidad: "",
+      precioVenta: "",
+      cantidad: "",
+    });
+    setOpenIngreso(true);
+  };
+
+  const submitIngreso = () => {
+    if (
+      !ing.loteId ||
+      !ing.maletaId ||
+      !ing.costoUnidad ||
+      !ing.precioVenta ||
+      !ing.cantidad
+    )
+      return;
+    if (precioInvalido) return;
+    ingresar.mutate(
+      {
+        data: {
+          loteId: Number(ing.loteId),
+          camisetaId: id,
+          maletaId: Number(ing.maletaId),
+          talla: ing.talla,
+          costoUnidad: Number(ing.costoUnidad),
+          precioVenta: Number(ing.precioVenta),
+          cantidad: Number(ing.cantidad),
+        },
+      },
+      {
+        onSuccess: () => {
+          invalidate();
+          setOpenIngreso(false);
+          toast({ title: "Inventario ingresado" });
+        },
+        onError: (e) =>
+          toast({
+            title: "Error",
+            description: apiErrorMessage(e, "No se pudo ingresar"),
+            variant: "destructive",
+          }),
+      },
+    );
+  };
+
+  // Venta / Traslado state
+  const [ventaItem, setVentaItem] = useState<DesgloseTalla | null>(null);
+  const [ventaCant, setVentaCant] = useState("1");
+  const [trasItem, setTrasItem] = useState<DesgloseTalla | null>(null);
+  const [trasCant, setTrasCant] = useState("1");
+  const [trasDestino, setTrasDestino] = useState("");
+
+  const submitVenta = () => {
+    if (!ventaItem) return;
+    vender.mutate(
+      {
+        data: {
+          inventarioId: ventaItem.inventarioId,
+          cantidad: Number(ventaCant),
+        },
+      },
+      {
+        onSuccess: (r) => {
+          invalidate();
+          setVentaItem(null);
+          toast({
+            title: "Venta registrada",
+            description: `Total: ${money(r.totalVenta)} · Restante: ${r.cantidadRestante}`,
+          });
+        },
+        onError: (e) =>
+          toast({
+            title: "Error",
+            description: apiErrorMessage(e, "No se pudo registrar la venta"),
+            variant: "destructive",
+          }),
+      },
+    );
+  };
+
+  const submitTraslado = () => {
+    if (!trasItem || !trasDestino) return;
+    trasladar.mutate(
+      {
+        data: {
+          inventarioId: trasItem.inventarioId,
+          maletaDestinoId: Number(trasDestino),
+          cantidad: Number(trasCant),
+        },
+      },
+      {
+        onSuccess: () => {
+          invalidate();
+          setTrasItem(null);
+          toast({ title: "Traslado realizado" });
+        },
+        onError: (e) =>
+          toast({
+            title: "Error",
+            description: apiErrorMessage(e, "No se pudo trasladar"),
+            variant: "destructive",
+          }),
+      },
+    );
+  };
 
   if (isLoading) {
     return (
@@ -97,9 +271,136 @@ export default function CamisetaDetalle() {
       </div>
 
       <div>
-        <h2 className="text-xl font-display text-foreground mb-3">
-          Desglose por talla
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl font-display text-foreground">
+            Desglose por talla
+          </h2>
+          <Dialog open={openIngreso} onOpenChange={setOpenIngreso}>
+            <DialogTrigger asChild>
+              <Button onClick={openIngresoDialog} className="gap-2">
+                <Plus className="h-4 w-4" /> Ingresar stock
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Ingresar stock · {data.nombreEquipo}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label>Lote</Label>
+                  <Select
+                    value={ing.loteId}
+                    onValueChange={(v) => setIng((s) => ({ ...s, loteId: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar lote" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lotes?.map((l) => (
+                        <SelectItem key={l.id} value={String(l.id)}>
+                          #{l.id} · {l.nombreProveedor} · {money(l.costoTotal)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Maleta</Label>
+                    <Select
+                      value={ing.maletaId}
+                      onValueChange={(v) =>
+                        setIng((s) => ({ ...s, maletaId: v }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Maleta" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {maletas?.map((m) => (
+                          <SelectItem key={m.id} value={String(m.id)}>
+                            {m.codigoMaleta}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Talla</Label>
+                    <Select
+                      value={ing.talla}
+                      onValueChange={(v) =>
+                        setIng((s) => ({ ...s, talla: v as Talla }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TALLAS.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Costo unidad</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={ing.costoUnidad}
+                      onChange={(e) =>
+                        setIng((s) => ({ ...s, costoUnidad: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Precio venta</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={ing.precioVenta}
+                      onChange={(e) =>
+                        setIng((s) => ({ ...s, precioVenta: e.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+                {precioInvalido && (
+                  <p className="text-sm text-destructive">
+                    El precio de venta debe ser mayor al costo unitario.
+                  </p>
+                )}
+                <div className="space-y-2">
+                  <Label>Cantidad</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={ing.cantidad}
+                    onChange={(e) =>
+                      setIng((s) => ({ ...s, cantidad: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  onClick={submitIngreso}
+                  disabled={ingresar.isPending || precioInvalido}
+                >
+                  Guardar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+
         {!data.desglose.length ? (
           <p className="text-muted-foreground">Sin inventario registrado.</p>
         ) : (
@@ -109,10 +410,12 @@ export default function CamisetaDetalle() {
                 <TableRow>
                   <TableHead>Talla</TableHead>
                   <TableHead>Maleta</TableHead>
+                  <TableHead>Lote</TableHead>
                   <TableHead className="text-right">Disponible</TableHead>
                   <TableHead className="text-right">Costo</TableHead>
                   <TableHead className="text-right">Precio</TableHead>
                   <TableHead className="text-right">Utilidad</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -129,6 +432,10 @@ export default function CamisetaDetalle() {
                       </span>
                     </TableCell>
                     <TableCell>{d.codigoMaleta}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      #{d.loteId}
+                      {d.nombreProveedor ? ` · ${d.nombreProveedor}` : ""}
+                    </TableCell>
                     <TableCell className="text-right">
                       {d.cantidadDisponible}
                     </TableCell>
@@ -141,6 +448,35 @@ export default function CamisetaDetalle() {
                     <TableCell className="text-right text-primary font-medium">
                       {money(d.utilidadProyectada)}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="gap-1"
+                          disabled={d.cantidadDisponible < 1}
+                          onClick={() => {
+                            setVentaItem(d);
+                            setVentaCant("1");
+                          }}
+                        >
+                          <DollarSign className="h-3.5 w-3.5" /> Vender
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1"
+                          disabled={d.cantidadDisponible < 1}
+                          onClick={() => {
+                            setTrasItem(d);
+                            setTrasCant("1");
+                            setTrasDestino("");
+                          }}
+                        >
+                          <ArrowLeftRight className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -148,6 +484,96 @@ export default function CamisetaDetalle() {
           </div>
         )}
       </div>
+
+      {/* Venta dialog */}
+      <Dialog open={!!ventaItem} onOpenChange={(o) => !o && setVentaItem(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar venta</DialogTitle>
+          </DialogHeader>
+          {ventaItem && (
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-muted-foreground">
+                {data.nombreEquipo} · Talla {ventaItem.talla} ·{" "}
+                {ventaItem.codigoMaleta} · Disp: {ventaItem.cantidadDisponible}
+              </p>
+              <div className="space-y-2">
+                <Label>Cantidad a vender</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max={ventaItem.cantidadDisponible}
+                  value={ventaCant}
+                  onChange={(e) => setVentaCant(e.target.value)}
+                />
+              </div>
+              <p className="text-sm">
+                Total estimado:{" "}
+                <span className="text-primary font-bold">
+                  {money(ventaItem.precioVenta * Number(ventaCant || 0))}
+                </span>
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={submitVenta} disabled={vender.isPending}>
+              Confirmar venta
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Traslado dialog */}
+      <Dialog open={!!trasItem} onOpenChange={(o) => !o && setTrasItem(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Trasladar a otra maleta</DialogTitle>
+          </DialogHeader>
+          {trasItem && (
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-muted-foreground">
+                {data.nombreEquipo} · Talla {trasItem.talla} · Origen:{" "}
+                {trasItem.codigoMaleta} · Disp: {trasItem.cantidadDisponible}
+              </p>
+              <div className="space-y-2">
+                <Label>Maleta destino</Label>
+                <Select value={trasDestino} onValueChange={setTrasDestino}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar maleta" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {maletas
+                      ?.filter((m) => m.id !== trasItem.maletaId)
+                      .map((m) => (
+                        <SelectItem key={m.id} value={String(m.id)}>
+                          {m.codigoMaleta}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Cantidad a trasladar</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max={trasItem.cantidadDisponible}
+                  value={trasCant}
+                  onChange={(e) => setTrasCant(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              onClick={submitTraslado}
+              disabled={trasladar.isPending || !trasDestino}
+            >
+              Confirmar traslado
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

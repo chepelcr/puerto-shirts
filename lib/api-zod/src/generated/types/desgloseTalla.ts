@@ -16,4 +16,7 @@ export interface DesgloseTalla {
   utilidadProyectada: number;
   maletaId: number;
   codigoMaleta: string;
+  loteId: number;
+  /** @nullable */
+  nombreProveedor?: string | null;
 }
