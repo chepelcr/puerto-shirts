@@ -12,9 +12,9 @@ import Lotes from "@/pages/Lotes";
 import Equipos from "@/pages/Equipos";
 import Proveedores from "@/pages/Proveedores";
 import Kardex from "@/pages/Kardex";
-import NuevaVenta from "@/pages/NuevaVenta";
 import Reportes from "@/pages/Reportes";
 import ReporteDetalle from "@/pages/ReporteDetalle";
+import { CartProvider } from "@/context/CartContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,7 +30,6 @@ function Router() {
     <AppLayout>
       <Switch>
         <Route path="/" component={Dashboard} />
-        <Route path="/ventas/nueva" component={NuevaVenta} />
         <Route path="/reportes" component={Reportes} />
         <Route path="/reportes/:fecha" component={ReporteDetalle} />
         <Route path="/camisetas" component={Camisetas} />
@@ -54,9 +53,11 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
+        <CartProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+            <Router />
+          </WouterRouter>
+        </CartProvider>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>

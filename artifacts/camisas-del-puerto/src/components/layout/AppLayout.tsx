@@ -7,7 +7,6 @@ import {
   Users, 
   Truck, 
   History,
-  ShoppingCart,
   BarChart3,
   Menu
 } from "lucide-react";
@@ -19,6 +18,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { CartDrawer } from "@/components/cart/CartDrawer";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -29,7 +29,6 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: Home },
-    { href: "/ventas/nueva", label: "Nueva venta", icon: ShoppingCart },
     { href: "/reportes", label: "Reportes", icon: BarChart3 },
     { href: "/camisetas", label: "Camisetas", icon: Shirt },
     { href: "/maletas", label: "Maletas", icon: Briefcase },
@@ -104,10 +103,12 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       {/* Main Content */}
       <main className="flex-1 overflow-x-hidden p-4 md:p-8">
-        <div className="max-w-6xl mx-auto pb-20 md:pb-0">
+        <div className="max-w-6xl mx-auto pb-24">
           {children}
         </div>
       </main>
+
+      <CartDrawer />
     </div>
   );
 }

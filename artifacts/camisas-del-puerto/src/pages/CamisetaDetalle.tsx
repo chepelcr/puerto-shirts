@@ -29,18 +29,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ImageIcon, Plus, ArrowLeftRight } from "lucide-react";
+import {
+  ArrowLeft,
+  ImageIcon,
+  Plus,
+  ArrowLeftRight,
+  ShoppingCart,
+  Check,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiErrorMessage, money, resolveImg } from "@/lib/format";
+import { useCart } from "@/context/CartContext";
 
 const TALLAS: Talla[] = ["S", "M", "L", "XL", "XXL", "XXXL"];
 const STOCK_BAJO = 3;
@@ -54,6 +54,8 @@ export default function CamisetaDetalle() {
   const { data, isLoading } = useGetCamisetaDetalle(id);
   const { data: maletas } = useListMaletas();
   const { data: lotes } = useListLotes();
+
+  const { cantidadDe, agregar, abrir } = useCart();
 
   const ingresar = useIngresarInventario();
   const trasladar = useTrasladarInventario();
@@ -366,71 +368,105 @@ export default function CamisetaDetalle() {
         {!data.desglose.length ? (
           <p className="text-muted-foreground">Sin inventario registrado.</p>
         ) : (
-          <div className="rounded-lg border border-border bg-card overflow-hidden overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Talla</TableHead>
-                  <TableHead>Maleta</TableHead>
-                  <TableHead>Lote</TableHead>
-                  <TableHead className="text-right">Disponible</TableHead>
-                  <TableHead className="text-right">Costo</TableHead>
-                  <TableHead className="text-right">Precio</TableHead>
-                  <TableHead className="text-right">Utilidad</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.desglose.map((d) => (
-                  <TableRow key={d.inventarioId}>
-                    <TableCell className="font-medium">
-                      <span className="flex items-center gap-2">
-                        {d.talla}
-                        {d.cantidadDisponible < STOCK_BAJO && (
-                          <Badge className="bg-destructive/20 text-destructive text-xs">
-                            Bajo
-                          </Badge>
-                        )}
-                      </span>
-                    </TableCell>
-                    <TableCell>{d.codigoMaleta}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      #{d.loteId}
-                      {d.nombreProveedor ? ` · ${d.nombreProveedor}` : ""}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {d.cantidadDisponible}
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      {money(d.costoUnidad)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {money(d.precioVenta)}
-                    </TableCell>
-                    <TableCell className="text-right text-primary font-medium">
-                      {money(d.utilidadProyectada)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="gap-1"
-                          disabled={d.cantidadDisponible < 1}
-                          onClick={() => {
-                            setTrasItem(d);
-                            setTrasCant("1");
-                            setTrasDestino("");
-                          }}
-                        >
-                          <ArrowLeftRight className="h-3.5 w-3.5" /> Trasladar
-                        </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {data.desglose.map((d) => {
+              const enCarrito = cantidadDe(d.inventarioId);
+              const sinStock = d.cantidadDisponible < 1;
+              const topeCarrito = enCarrito >= d.cantidadDisponible;
+              return (
+                <Card
+                  key={d.inventarioId}
+                  className="bg-card border-card-border"
+                >
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl font-display font-bold">
+                            {d.talla}
+                          </span>
+                          {d.cantidadDisponible < STOCK_BAJO && (
+                            <Badge className="bg-destructive/20 text-destructive text-xs">
+                              Bajo
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {d.codigoMaleta} · Lote #{d.loteId}
+                          {d.nombreProveedor ? ` · ${d.nombreProveedor}` : ""}
+                        </p>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      <div className="text-right">
+                        <div className="text-lg font-bold">
+                          {money(d.precioVenta)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Costo {money(d.costoUnidad)}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Disponible:{" "}
+                        <span className="text-foreground font-medium">
+                          {d.cantidadDisponible}
+                        </span>
+                      </span>
+                      <span className="text-primary font-medium">
+                        Utilidad {money(d.utilidadProyectada)}
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        className="flex-1 gap-1"
+                        disabled={sinStock || topeCarrito}
+                        onClick={() => {
+                          agregar(d.inventarioId, d.cantidadDisponible);
+                          toast({
+                            title: "Agregado al carrito",
+                            description: `${data.nombreEquipo} · Talla ${d.talla}`,
+                          });
+                        }}
+                      >
+                        {enCarrito > 0 ? (
+                          <>
+                            <Check className="h-3.5 w-3.5" /> En carrito ({enCarrito})
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="h-3.5 w-3.5" /> Agregar
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="gap-1"
+                        disabled={sinStock}
+                        onClick={() => {
+                          setTrasItem(d);
+                          setTrasCant("1");
+                          setTrasDestino("");
+                        }}
+                      >
+                        <ArrowLeftRight className="h-3.5 w-3.5" /> Trasladar
+                      </Button>
+                    </div>
+                    {enCarrito > 0 && (
+                      <button
+                        onClick={abrir}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Ver carrito
+                      </button>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
