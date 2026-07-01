@@ -10,6 +10,24 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: proveedores
+    description: Gestión de proveedores
+  - name: equipos
+    description: Gestión de equipos
+  - name: maletas
+    description: Gestión de maletas (ubicaciones físicas)
+  - name: camisetas
+    description: Gestión de camisetas
+  - name: lotes
+    description: Gestión de lotes de compra
+  - name: inventario
+    description: Inventario, ingresos, ventas y traslados
+  - name: kardex
+    description: Historial de movimientos
+  - name: dashboard
+    description: Resúmenes y métricas
+  - name: Storage
+    description: Object storage upload and serving endpoints.
 paths:
   /healthz:
     get:
@@ -24,7 +42,706 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /proveedores:
+    get:
+      operationId: listProveedores
+      tags: [proveedores]
+      summary: Listar proveedores
+      responses:
+        "200":
+          description: Lista de proveedores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Proveedor"
+    post:
+      operationId: createProveedor
+      tags: [proveedores]
+      summary: Crear proveedor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProveedorInput"
+      responses:
+        "201":
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proveedor"
+  /proveedores/{id}:
+    get:
+      operationId: getProveedor
+      tags: [proveedores]
+      summary: Obtener proveedor
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Proveedor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proveedor"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateProveedor
+      tags: [proveedores]
+      summary: Actualizar proveedor
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProveedorUpdate"
+      responses:
+        "200":
+          description: Actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Proveedor"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteProveedor
+      tags: [proveedores]
+      summary: Eliminar proveedor
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "204":
+          description: Eliminado
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /equipos:
+    get:
+      operationId: listEquipos
+      tags: [equipos]
+      summary: Listar equipos
+      responses:
+        "200":
+          description: Lista de equipos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Equipo"
+    post:
+      operationId: createEquipo
+      tags: [equipos]
+      summary: Crear equipo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EquipoInput"
+      responses:
+        "201":
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Equipo"
+  /equipos/{id}:
+    get:
+      operationId: getEquipo
+      tags: [equipos]
+      summary: Obtener equipo
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Equipo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Equipo"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateEquipo
+      tags: [equipos]
+      summary: Actualizar equipo
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EquipoUpdate"
+      responses:
+        "200":
+          description: Actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Equipo"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteEquipo
+      tags: [equipos]
+      summary: Eliminar equipo
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "204":
+          description: Eliminado
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /maletas:
+    get:
+      operationId: listMaletas
+      tags: [maletas]
+      summary: Listar maletas
+      responses:
+        "200":
+          description: Lista de maletas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Maleta"
+    post:
+      operationId: createMaleta
+      tags: [maletas]
+      summary: Crear maleta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MaletaInput"
+      responses:
+        "201":
+          description: Creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Maleta"
+  /maletas/{id}:
+    get:
+      operationId: getMaleta
+      tags: [maletas]
+      summary: Obtener maleta
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Maleta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Maleta"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateMaleta
+      tags: [maletas]
+      summary: Actualizar maleta
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MaletaUpdate"
+      responses:
+        "200":
+          description: Actualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Maleta"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteMaleta
+      tags: [maletas]
+      summary: Eliminar maleta
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "204":
+          description: Eliminada
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /maletas/{id}/contenido:
+    get:
+      operationId: getMaletaContenido
+      tags: [maletas]
+      summary: Contenido de una maleta
+      description: Lista el inventario almacenado en una maleta específica
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Contenido de la maleta
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ContenidoMaletaItem"
+
+  /camisetas:
+    get:
+      operationId: listCamisetas
+      tags: [camisetas]
+      summary: Listar camisetas
+      responses:
+        "200":
+          description: Lista de camisetas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Camiseta"
+    post:
+      operationId: createCamiseta
+      tags: [camisetas]
+      summary: Crear camiseta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CamisetaInput"
+      responses:
+        "201":
+          description: Creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Camiseta"
+  /camisetas/{id}:
+    get:
+      operationId: getCamiseta
+      tags: [camisetas]
+      summary: Obtener camiseta
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Camiseta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Camiseta"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateCamiseta
+      tags: [camisetas]
+      summary: Actualizar camiseta
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CamisetaUpdate"
+      responses:
+        "200":
+          description: Actualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Camiseta"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteCamiseta
+      tags: [camisetas]
+      summary: Eliminar camiseta
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "204":
+          description: Eliminada
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /camisetas/{id}/detalle:
+    get:
+      operationId: getCamisetaDetalle
+      tags: [camisetas]
+      summary: Detalle de camiseta con desglose por talla
+      description: Devuelve el desglose por talla (cantidad, costo, precio, utilidad) y las ubicaciones físicas
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Detalle de la camiseta
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CamisetaDetalle"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /lotes:
+    get:
+      operationId: listLotes
+      tags: [lotes]
+      summary: Listar lotes
+      parameters:
+        - name: tipoCompra
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/TipoCompra"
+        - name: proveedorId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Lista de lotes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Lote"
+    post:
+      operationId: createLote
+      tags: [lotes]
+      summary: Crear lote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoteInput"
+      responses:
+        "201":
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lote"
+  /lotes/{id}:
+    get:
+      operationId: getLote
+      tags: [lotes]
+      summary: Obtener lote
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Lote
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lote"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateLote
+      tags: [lotes]
+      summary: Actualizar lote
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoteUpdate"
+      responses:
+        "200":
+          description: Actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lote"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteLote
+      tags: [lotes]
+      summary: Eliminar lote
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "204":
+          description: Eliminado
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /inventario:
+    get:
+      operationId: listInventario
+      tags: [inventario]
+      summary: Listar inventario
+      parameters:
+        - name: camisetaId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: maletaId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Lista de inventario
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InventarioItem"
+  /inventario/ingreso:
+    post:
+      operationId: ingresarInventario
+      tags: [inventario]
+      summary: Ingreso de inventario
+      description: Registra una entrada de inventario (lote, camiseta, talla, maleta) y genera un movimiento en el kardex. El precio de venta debe ser mayor al costo unitario.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IngresoInput"
+      responses:
+        "201":
+          description: Ingreso registrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventarioItem"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /inventario/venta:
+    post:
+      operationId: registrarVenta
+      tags: [inventario]
+      summary: Registrar venta
+      description: Descuenta unidades del inventario de una talla específica y genera un movimiento de venta en el kardex.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VentaInput"
+      responses:
+        "201":
+          description: Venta registrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VentaResultado"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /inventario/traslado:
+    post:
+      operationId: trasladarInventario
+      tags: [inventario]
+      summary: Trasladar inventario entre maletas
+      description: Mueve unidades de una talla de una maleta origen a una maleta destino y genera un movimiento de traslado en el kardex.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrasladoInput"
+      responses:
+        "201":
+          description: Traslado registrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrasladoResultado"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
+  /kardex:
+    get:
+      operationId: listKardex
+      tags: [kardex]
+      summary: Historial de movimientos
+      parameters:
+        - name: tipoMovimiento
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/TipoMovimiento"
+        - name: camisetaId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Lista de movimientos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MovimientoKardex"
+
+  /dashboard/resumen:
+    get:
+      operationId: getDashboardResumen
+      tags: [dashboard]
+      summary: Resumen del dashboard
+      description: Tarjetas de camisetas con total de unidades, utilidad proyectada y alertas de stock bajo por talla.
+      responses:
+        "200":
+          description: Resumen del dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardResumen"
+
+  /storage/uploads/request-url:
+    post:
+      tags: [Storage]
+      operationId: requestUploadUrl
+      summary: Request a presigned URL for file upload
+      description: |
+        Returns a presigned GCS URL for direct upload. The client sends JSON
+        metadata here, then uploads the file directly to the returned URL.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadUrlRequest'
+      responses:
+        '200':
+          description: Presigned upload URL generated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadUrlResponse'
+        '400':
+          description: Missing or invalid required fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Failed to generate upload URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /storage/public-objects/{filePath}:
+    get:
+      tags: [Storage]
+      operationId: getPublicObject
+      summary: Serve a public asset from PUBLIC_OBJECT_SEARCH_PATHS
+      description: |
+        Unconditionally public — no authentication or ACL checks.
+        Searches PUBLIC_OBJECT_SEARCH_PATHS for the given file path.
+      parameters:
+        - name: filePath
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Relative file path within the public search paths.
+      responses:
+        '200':
+          description: Object content streamed with correct Content-Type.
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: File not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Failed to serve public object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /storage/objects/{objectPath}:
+    get:
+      tags: [Storage]
+      operationId: getStorageObject
+      summary: Serve an object entity from PRIVATE_OBJECT_DIR
+      description: |
+        Serves object entities uploaded via presigned URLs. These can optionally
+        be protected with authentication or ACL checks based on the use case.
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Object path within the private object dir (e.g. `uploads/some-uuid`).
+      responses:
+        '200':
+          description: Object content streamed with correct Content-Type.
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Object not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Failed to serve object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
 components:
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+  responses:
+    NotFound:
+      description: No encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ValidationError:
+      description: Error de validación
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +751,451 @@ components:
       required:
         - status
 
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Original file name.
+        size:
+          type: integer
+          minimum: 1
+          description: File size in bytes.
+        contentType:
+          type: string
+          minLength: 1
+          description: MIME type of the file (e.g. `image/jpeg`).
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL:
+          type: string
+          format: uri
+          description: Presigned GCS URL for PUT upload.
+        objectPath:
+          type: string
+          description: Normalized object path (e.g. `/objects/uploads/uuid`). Store this in your database.
+        metadata:
+          $ref: '#/components/schemas/UploadUrlRequest'
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    TipoCompra:
+      type: string
+      enum: [contado, credito]
+
+    TipoMovimiento:
+      type: string
+      enum: [entrada, venta, traslado]
+
+    Talla:
+      type: string
+      enum: [S, M, L, XL, XXL, XXXL]
+
+    Proveedor:
+      type: object
+      required: [id, nombre]
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+    ProveedorInput:
+      type: object
+      required: [nombre]
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+    ProveedorUpdate:
+      type: object
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+
+    Equipo:
+      type: object
+      required: [id, nombreEquipo]
+      properties:
+        id:
+          type: integer
+        nombreEquipo:
+          type: string
+    EquipoInput:
+      type: object
+      required: [nombreEquipo]
+      properties:
+        nombreEquipo:
+          type: string
+          minLength: 1
+    EquipoUpdate:
+      type: object
+      properties:
+        nombreEquipo:
+          type: string
+          minLength: 1
+
+    Maleta:
+      type: object
+      required: [id, codigoMaleta]
+      properties:
+        id:
+          type: integer
+        codigoMaleta:
+          type: string
+        descripcion:
+          type: ["string", "null"]
+    MaletaInput:
+      type: object
+      required: [codigoMaleta]
+      properties:
+        codigoMaleta:
+          type: string
+          minLength: 1
+        descripcion:
+          type: string
+    MaletaUpdate:
+      type: object
+      properties:
+        codigoMaleta:
+          type: string
+          minLength: 1
+        descripcion:
+          type: string
+
+    Camiseta:
+      type: object
+      required: [id, equipoId]
+      properties:
+        id:
+          type: integer
+        equipoId:
+          type: integer
+        nombreEquipo:
+          type: ["string", "null"]
+        urlImagen:
+          type: ["string", "null"]
+        descripcion:
+          type: ["string", "null"]
+    CamisetaInput:
+      type: object
+      required: [equipoId]
+      properties:
+        equipoId:
+          type: integer
+        urlImagen:
+          type: string
+        descripcion:
+          type: string
+    CamisetaUpdate:
+      type: object
+      properties:
+        equipoId:
+          type: integer
+        urlImagen:
+          type: string
+        descripcion:
+          type: string
+
+    Lote:
+      type: object
+      required: [id, proveedorId, fechaIngreso, tipoCompra, costoTotal]
+      properties:
+        id:
+          type: integer
+        proveedorId:
+          type: integer
+        nombreProveedor:
+          type: ["string", "null"]
+        fechaIngreso:
+          type: string
+          format: date
+        tipoCompra:
+          $ref: "#/components/schemas/TipoCompra"
+        costoTotal:
+          type: number
+    LoteInput:
+      type: object
+      required: [proveedorId, fechaIngreso, tipoCompra, costoTotal]
+      properties:
+        proveedorId:
+          type: integer
+        fechaIngreso:
+          type: string
+          format: date
+        tipoCompra:
+          $ref: "#/components/schemas/TipoCompra"
+        costoTotal:
+          type: number
+          minimum: 0
+    LoteUpdate:
+      type: object
+      properties:
+        proveedorId:
+          type: integer
+        fechaIngreso:
+          type: string
+          format: date
+        tipoCompra:
+          $ref: "#/components/schemas/TipoCompra"
+        costoTotal:
+          type: number
+          minimum: 0
+
+    InventarioItem:
+      type: object
+      required: [id, camisetaId, loteId, maletaId, talla, costoUnidad, precioVenta, cantidadDisponible]
+      properties:
+        id:
+          type: integer
+        camisetaId:
+          type: integer
+        loteId:
+          type: integer
+        maletaId:
+          type: integer
+        talla:
+          $ref: "#/components/schemas/Talla"
+        costoUnidad:
+          type: number
+        precioVenta:
+          type: number
+        cantidadDisponible:
+          type: integer
+        nombreEquipo:
+          type: ["string", "null"]
+        urlImagen:
+          type: ["string", "null"]
+        codigoMaleta:
+          type: ["string", "null"]
+        utilidadProyectada:
+          type: ["number", "null"]
+
+    IngresoInput:
+      type: object
+      required: [loteId, camisetaId, maletaId, talla, costoUnidad, precioVenta, cantidad]
+      properties:
+        loteId:
+          type: integer
+        camisetaId:
+          type: integer
+        maletaId:
+          type: integer
+        talla:
+          $ref: "#/components/schemas/Talla"
+        costoUnidad:
+          type: number
+          minimum: 0
+        precioVenta:
+          type: number
+          minimum: 0
+        cantidad:
+          type: integer
+          minimum: 1
+
+    VentaInput:
+      type: object
+      required: [inventarioId, cantidad]
+      properties:
+        inventarioId:
+          type: integer
+        cantidad:
+          type: integer
+          minimum: 1
+    VentaResultado:
+      type: object
+      required: [inventarioId, cantidadVendida, cantidadRestante, totalVenta]
+      properties:
+        inventarioId:
+          type: integer
+        cantidadVendida:
+          type: integer
+        cantidadRestante:
+          type: integer
+        totalVenta:
+          type: number
+
+    TrasladoInput:
+      type: object
+      required: [inventarioId, maletaDestinoId, cantidad]
+      properties:
+        inventarioId:
+          type: integer
+        maletaDestinoId:
+          type: integer
+        cantidad:
+          type: integer
+          minimum: 1
+    TrasladoResultado:
+      type: object
+      required: [inventarioOrigenId, inventarioDestinoId, cantidad]
+      properties:
+        inventarioOrigenId:
+          type: integer
+        inventarioDestinoId:
+          type: integer
+        cantidad:
+          type: integer
+
+    DesgloseTalla:
+      type: object
+      required: [inventarioId, talla, cantidadDisponible, costoUnidad, precioVenta, utilidadProyectada, codigoMaleta, maletaId]
+      properties:
+        inventarioId:
+          type: integer
+        talla:
+          $ref: "#/components/schemas/Talla"
+        cantidadDisponible:
+          type: integer
+        costoUnidad:
+          type: number
+        precioVenta:
+          type: number
+        utilidadProyectada:
+          type: number
+        maletaId:
+          type: integer
+        codigoMaleta:
+          type: string
+
+    CamisetaDetalle:
+      type: object
+      required: [id, equipoId, totalUnidades, utilidadTotal, desglose]
+      properties:
+        id:
+          type: integer
+        equipoId:
+          type: integer
+        nombreEquipo:
+          type: ["string", "null"]
+        urlImagen:
+          type: ["string", "null"]
+        descripcion:
+          type: ["string", "null"]
+        totalUnidades:
+          type: integer
+        utilidadTotal:
+          type: number
+        desglose:
+          type: array
+          items:
+            $ref: "#/components/schemas/DesgloseTalla"
+
+    ContenidoMaletaItem:
+      type: object
+      required: [inventarioId, camisetaId, talla, cantidadDisponible, precioVenta, costoUnidad]
+      properties:
+        inventarioId:
+          type: integer
+        camisetaId:
+          type: integer
+        nombreEquipo:
+          type: ["string", "null"]
+        urlImagen:
+          type: ["string", "null"]
+        talla:
+          $ref: "#/components/schemas/Talla"
+        cantidadDisponible:
+          type: integer
+        precioVenta:
+          type: number
+        costoUnidad:
+          type: number
+
+    TallaStock:
+      type: object
+      required: [talla, cantidad, stockBajo]
+      properties:
+        talla:
+          $ref: "#/components/schemas/Talla"
+        cantidad:
+          type: integer
+        stockBajo:
+          type: boolean
+
+    DashboardCard:
+      type: object
+      required: [camisetaId, equipoId, totalUnidades, utilidadProyectada, tieneStockBajo, stockPorTalla]
+      properties:
+        camisetaId:
+          type: integer
+        equipoId:
+          type: integer
+        nombreEquipo:
+          type: ["string", "null"]
+        urlImagen:
+          type: ["string", "null"]
+        descripcion:
+          type: ["string", "null"]
+        totalUnidades:
+          type: integer
+        utilidadProyectada:
+          type: number
+        tieneStockBajo:
+          type: boolean
+        stockPorTalla:
+          type: array
+          items:
+            $ref: "#/components/schemas/TallaStock"
+
+    DashboardResumen:
+      type: object
+      required: [totalModelos, totalUnidades, utilidadTotalProyectada, modelosStockBajo, cards]
+      properties:
+        totalModelos:
+          type: integer
+        totalUnidades:
+          type: integer
+        utilidadTotalProyectada:
+          type: number
+        modelosStockBajo:
+          type: integer
+        cards:
+          type: array
+          items:
+            $ref: "#/components/schemas/DashboardCard"
+
+    MovimientoKardex:
+      type: object
+      required: [id, tipoMovimiento, camisetaId, talla, cantidad, fecha]
+      properties:
+        id:
+          type: integer
+        tipoMovimiento:
+          $ref: "#/components/schemas/TipoMovimiento"
+        camisetaId:
+          type: integer
+        nombreEquipo:
+          type: ["string", "null"]
+        talla:
+          $ref: "#/components/schemas/Talla"
+        cantidad:
+          type: integer
+        maletaId:
+          type: ["integer", "null"]
+        codigoMaleta:
+          type: ["string", "null"]
+        maletaDestinoId:
+          type: ["integer", "null"]
+        codigoMaletaDestino:
+          type: ["string", "null"]
+        precioUnitario:
+          type: ["number", "null"]
+        fecha:
+          type: string
+          format: date-time
