@@ -6,7 +6,6 @@ import {
   useListMaletas,
   useListLotes,
   useIngresarInventario,
-  useRegistrarVenta,
   useTrasladarInventario,
   Talla,
 } from "@workspace/api-client-react";
@@ -39,13 +38,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import {
-  ArrowLeft,
-  ImageIcon,
-  Plus,
-  DollarSign,
-  ArrowLeftRight,
-} from "lucide-react";
+import { ArrowLeft, ImageIcon, Plus, ArrowLeftRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiErrorMessage, money, resolveImg } from "@/lib/format";
 
@@ -63,7 +56,6 @@ export default function CamisetaDetalle() {
   const { data: lotes } = useListLotes();
 
   const ingresar = useIngresarInventario();
-  const vender = useRegistrarVenta();
   const trasladar = useTrasladarInventario();
 
   const invalidate = () => qc.invalidateQueries();
@@ -134,40 +126,10 @@ export default function CamisetaDetalle() {
     );
   };
 
-  // Venta / Traslado state
-  const [ventaItem, setVentaItem] = useState<DesgloseTalla | null>(null);
-  const [ventaCant, setVentaCant] = useState("1");
+  // Traslado state
   const [trasItem, setTrasItem] = useState<DesgloseTalla | null>(null);
   const [trasCant, setTrasCant] = useState("1");
   const [trasDestino, setTrasDestino] = useState("");
-
-  const submitVenta = () => {
-    if (!ventaItem) return;
-    vender.mutate(
-      {
-        data: {
-          inventarioId: ventaItem.inventarioId,
-          cantidad: Number(ventaCant),
-        },
-      },
-      {
-        onSuccess: (r) => {
-          invalidate();
-          setVentaItem(null);
-          toast({
-            title: "Venta registrada",
-            description: `Total: ${money(r.totalVenta)} · Restante: ${r.cantidadRestante}`,
-          });
-        },
-        onError: (e) =>
-          toast({
-            title: "Error",
-            description: apiErrorMessage(e, "No se pudo registrar la venta"),
-            variant: "destructive",
-          }),
-      },
-    );
-  };
 
   const submitTraslado = () => {
     if (!trasItem || !trasDestino) return;
@@ -451,18 +413,6 @@ export default function CamisetaDetalle() {
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button
-                          variant="secondary"
-                          size="sm"
-                          className="gap-1"
-                          disabled={d.cantidadDisponible < 1}
-                          onClick={() => {
-                            setVentaItem(d);
-                            setVentaCant("1");
-                          }}
-                        >
-                          <DollarSign className="h-3.5 w-3.5" /> Vender
-                        </Button>
-                        <Button
                           variant="ghost"
                           size="sm"
                           className="gap-1"
@@ -473,7 +423,7 @@ export default function CamisetaDetalle() {
                             setTrasDestino("");
                           }}
                         >
-                          <ArrowLeftRight className="h-3.5 w-3.5" />
+                          <ArrowLeftRight className="h-3.5 w-3.5" /> Trasladar
                         </Button>
                       </div>
                     </TableCell>
@@ -484,44 +434,6 @@ export default function CamisetaDetalle() {
           </div>
         )}
       </div>
-
-      {/* Venta dialog */}
-      <Dialog open={!!ventaItem} onOpenChange={(o) => !o && setVentaItem(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Registrar venta</DialogTitle>
-          </DialogHeader>
-          {ventaItem && (
-            <div className="space-y-4 py-2">
-              <p className="text-sm text-muted-foreground">
-                {data.nombreEquipo} · Talla {ventaItem.talla} ·{" "}
-                {ventaItem.codigoMaleta} · Disp: {ventaItem.cantidadDisponible}
-              </p>
-              <div className="space-y-2">
-                <Label>Cantidad a vender</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  max={ventaItem.cantidadDisponible}
-                  value={ventaCant}
-                  onChange={(e) => setVentaCant(e.target.value)}
-                />
-              </div>
-              <p className="text-sm">
-                Total estimado:{" "}
-                <span className="text-primary font-bold">
-                  {money(ventaItem.precioVenta * Number(ventaCant || 0))}
-                </span>
-              </p>
-            </div>
-          )}
-          <DialogFooter>
-            <Button onClick={submitVenta} disabled={vender.isPending}>
-              Confirmar venta
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Traslado dialog */}
       <Dialog open={!!trasItem} onOpenChange={(o) => !o && setTrasItem(null)}>

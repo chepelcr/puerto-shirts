@@ -12,6 +12,9 @@ import Lotes from "@/pages/Lotes";
 import Equipos from "@/pages/Equipos";
 import Proveedores from "@/pages/Proveedores";
 import Kardex from "@/pages/Kardex";
+import NuevaVenta from "@/pages/NuevaVenta";
+import Reportes from "@/pages/Reportes";
+import ReporteDetalle from "@/pages/ReporteDetalle";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +30,9 @@ function Router() {
     <AppLayout>
       <Switch>
         <Route path="/" component={Dashboard} />
+        <Route path="/ventas/nueva" component={NuevaVenta} />
+        <Route path="/reportes" component={Reportes} />
+        <Route path="/reportes/:fecha" component={ReporteDetalle} />
         <Route path="/camisetas" component={Camisetas} />
         <Route path="/camisetas/:id" component={CamisetaDetalle} />
         <Route path="/maletas" component={Maletas} />

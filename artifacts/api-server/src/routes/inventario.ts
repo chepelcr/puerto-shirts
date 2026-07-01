@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { eq, and, type SQL } from "drizzle-orm";
+import { eq, and, gte, sql, type SQL } from "drizzle-orm";
 import {
   db,
   inventarioTable,
@@ -7,6 +7,8 @@ import {
   equiposTable,
   maletasTable,
   kardexTable,
+  ventasTable,
+  ventaDetallesTable,
 } from "@workspace/db";
 import {
   IngresarInventarioBody,
@@ -16,6 +18,8 @@ import {
 import { num } from "../lib/http";
 
 const router: IRouter = Router();
+
+const round2 = (n: number): number => Math.round(n * 100) / 100;
 
 router.get("/inventario", async (req: Request, res: Response) => {
   const filters: SQL[] = [];
@@ -145,54 +149,133 @@ router.post("/inventario/venta", async (req: Request, res: Response) => {
     res.status(422).json({ error: "Datos inválidos" });
     return;
   }
-  const { inventarioId, cantidad } = parsed.data;
+  const { items } = parsed.data;
+
+  if (items.length === 0) {
+    res.status(422).json({ error: "La venta debe incluir al menos una camiseta" });
+    return;
+  }
+
+  const combinados = new Map<number, number>();
+  for (const it of items) {
+    combinados.set(it.inventarioId, (combinados.get(it.inventarioId) ?? 0) + it.cantidad);
+  }
 
   try {
     const result = await db.transaction(async (tx) => {
-      const [item] = await tx
-        .select()
-        .from(inventarioTable)
-        .where(eq(inventarioTable.id, inventarioId));
+      let totalCamisetas = 0;
+      let total = 0;
+      let utilidadTotal = 0;
+      const lineas: {
+        inventarioId: number;
+        camisetaId: number;
+        talla: (typeof inventarioTable.$inferSelect)["talla"];
+        maletaId: number;
+        cantidad: number;
+        costoUnidad: number;
+        precioUnitario: number;
+        subtotal: number;
+        utilidad: number;
+      }[] = [];
 
-      if (!item) {
-        throw new Error("NOT_FOUND");
+      for (const [inventarioId, cantidad] of combinados) {
+        const [item] = await tx
+          .select()
+          .from(inventarioTable)
+          .where(eq(inventarioTable.id, inventarioId));
+
+        if (!item) {
+          throw new Error(`NOT_FOUND:${inventarioId}`);
+        }
+
+        const claimed = await tx
+          .update(inventarioTable)
+          .set({
+            cantidadDisponible: sql`${inventarioTable.cantidadDisponible} - ${cantidad}`,
+          })
+          .where(
+            and(
+              eq(inventarioTable.id, inventarioId),
+              gte(inventarioTable.cantidadDisponible, cantidad),
+            ),
+          )
+          .returning({ id: inventarioTable.id });
+
+        if (claimed.length === 0) {
+          throw new Error(`INSUFFICIENT:${inventarioId}`);
+        }
+
+        const precio = num(item.precioVenta);
+        const costo = num(item.costoUnidad);
+        const subtotal = round2(precio * cantidad);
+        const utilidad = round2((precio - costo) * cantidad);
+
+        totalCamisetas += cantidad;
+        total = round2(total + subtotal);
+        utilidadTotal = round2(utilidadTotal + utilidad);
+
+        lineas.push({
+          inventarioId,
+          camisetaId: item.camisetaId,
+          talla: item.talla,
+          maletaId: item.maletaId,
+          cantidad,
+          costoUnidad: costo,
+          precioUnitario: precio,
+          subtotal,
+          utilidad,
+        });
+
+        await tx.insert(kardexTable).values({
+          tipoMovimiento: "venta",
+          camisetaId: item.camisetaId,
+          talla: item.talla,
+          cantidad,
+          maletaId: item.maletaId,
+          precioUnitario: String(precio),
+        });
       }
-      if (item.cantidadDisponible < cantidad) {
-        throw new Error("INSUFFICIENT");
-      }
 
-      const restante = item.cantidadDisponible - cantidad;
-      await tx
-        .update(inventarioTable)
-        .set({ cantidadDisponible: restante })
-        .where(eq(inventarioTable.id, inventarioId));
+      const [venta] = await tx
+        .insert(ventasTable)
+        .values({
+          totalCamisetas,
+          total: String(total),
+          utilidad: String(utilidadTotal),
+        })
+        .returning();
 
-      const precio = num(item.precioVenta);
-      await tx.insert(kardexTable).values({
-        tipoMovimiento: "venta",
-        camisetaId: item.camisetaId,
-        talla: item.talla,
-        cantidad,
-        maletaId: item.maletaId,
-        precioUnitario: String(precio),
-      });
+      await tx.insert(ventaDetallesTable).values(
+        lineas.map((l) => ({
+          ventaId: venta.id,
+          inventarioId: l.inventarioId,
+          camisetaId: l.camisetaId,
+          talla: l.talla,
+          maletaId: l.maletaId,
+          cantidad: l.cantidad,
+          costoUnidad: String(l.costoUnidad),
+          precioUnitario: String(l.precioUnitario),
+          subtotal: String(l.subtotal),
+          utilidad: String(l.utilidad),
+        })),
+      );
 
       return {
-        inventarioId,
-        cantidadVendida: cantidad,
-        cantidadRestante: restante,
-        totalVenta: precio * cantidad,
+        ventaId: venta.id,
+        totalCamisetas,
+        totalVenta: total,
+        utilidad: utilidadTotal,
       };
     });
 
     res.status(201).json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "";
-    if (message === "NOT_FOUND") {
+    if (message.startsWith("NOT_FOUND")) {
       res.status(422).json({ error: "Inventario no encontrado" });
       return;
     }
-    if (message === "INSUFFICIENT") {
+    if (message.startsWith("INSUFFICIENT")) {
       res.status(422).json({ error: "Cantidad insuficiente en inventario" });
       return;
     }

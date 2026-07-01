@@ -5,9 +5,9 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { VentaItemInput } from './ventaItemInput';
 
 export interface VentaInput {
-  inventarioId: number;
-  /** @minimum 1 */
-  cantidad: number;
+  /** @minItems 1 */
+  items: VentaItemInput[];
 }

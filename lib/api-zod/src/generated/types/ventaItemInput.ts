@@ -6,9 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface VentaResultado {
-  ventaId: number;
-  totalCamisetas: number;
-  totalVenta: number;
-  utilidad: number;
+export interface VentaItemInput {
+  inventarioId: number;
+  /** @minimum 1 */
+  cantidad: number;
 }

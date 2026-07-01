@@ -202,17 +202,68 @@ export interface IngresoInput {
   cantidad: number;
 }
 
-export interface VentaInput {
+export interface VentaItemInput {
   inventarioId: number;
   /** @minimum 1 */
   cantidad: number;
 }
 
+export interface VentaInput {
+  /** @minItems 1 */
+  items: VentaItemInput[];
+}
+
 export interface VentaResultado {
-  inventarioId: number;
-  cantidadVendida: number;
-  cantidadRestante: number;
+  ventaId: number;
+  totalCamisetas: number;
   totalVenta: number;
+  utilidad: number;
+}
+
+export interface ReporteVentaDiaria {
+  fecha: string;
+  numVentas: number;
+  totalCamisetas: number;
+  total: number;
+  utilidad: number;
+}
+
+export interface ReporteVentaItem {
+  id: number;
+  camisetaId: number;
+  /** @nullable */
+  nombreEquipo?: string | null;
+  /** @nullable */
+  descripcion?: string | null;
+  /** @nullable */
+  urlImagen?: string | null;
+  talla: Talla;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
+  utilidad: number;
+  /** @nullable */
+  maletaId?: number | null;
+  /** @nullable */
+  codigoMaleta?: string | null;
+}
+
+export interface ReporteVenta {
+  id: number;
+  fecha: string;
+  totalCamisetas: number;
+  total: number;
+  utilidad: number;
+  items: ReporteVentaItem[];
+}
+
+export interface ReporteVentaDiariaDetalle {
+  fecha: string;
+  numVentas: number;
+  totalCamisetas: number;
+  total: number;
+  utilidad: number;
+  ventas: ReporteVenta[];
 }
 
 export interface TrasladoInput {

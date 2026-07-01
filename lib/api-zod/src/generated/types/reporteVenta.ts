@@ -5,10 +5,13 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { ReporteVentaItem } from './reporteVentaItem';
 
-export interface VentaResultado {
-  ventaId: number;
+export interface ReporteVenta {
+  id: number;
+  fecha: string;
   totalCamisetas: number;
-  totalVenta: number;
+  total: number;
   utilidad: number;
+  items: ReporteVentaItem[];
 }

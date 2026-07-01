@@ -26,6 +26,8 @@ tags:
     description: Historial de movimientos
   - name: dashboard
     description: Resúmenes y métricas
+  - name: reportes
+    description: Reportes de ventas
   - name: Storage
     description: Object storage upload and serving endpoints.
 paths:
@@ -617,6 +619,44 @@ paths:
               schema:
                 $ref: "#/components/schemas/DashboardResumen"
 
+  /reportes/ventas-diarias:
+    get:
+      operationId: getReporteVentasDiarias
+      tags: [reportes]
+      summary: Reporte de ventas por día
+      description: Resumen de ventas agrupadas por día (zona horaria de Costa Rica), con total de camisetas, ingresos y utilidad.
+      responses:
+        "200":
+          description: Lista de días con ventas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReporteVentaDiaria"
+  /reportes/ventas-diarias/{fecha}:
+    get:
+      operationId: getReporteVentasDiariasDetalle
+      tags: [reportes]
+      summary: Detalle de ventas de un día
+      description: Todas las ventas registradas en un día específico, con las camisetas vendidas en cada venta.
+      parameters:
+        - name: fecha
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Fecha en formato YYYY-MM-DD
+      responses:
+        "200":
+          description: Detalle de ventas del día
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReporteVentaDiariaDetalle"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+
   /storage/uploads/request-url:
     post:
       tags: [Storage]
@@ -1008,7 +1048,7 @@ components:
           type: integer
           minimum: 1
 
-    VentaInput:
+    VentaItemInput:
       type: object
       required: [inventarioId, cantidad]
       properties:
@@ -1017,18 +1057,106 @@ components:
         cantidad:
           type: integer
           minimum: 1
+    VentaInput:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/VentaItemInput"
     VentaResultado:
       type: object
-      required: [inventarioId, cantidadVendida, cantidadRestante, totalVenta]
+      required: [ventaId, totalCamisetas, totalVenta, utilidad]
       properties:
-        inventarioId:
+        ventaId:
           type: integer
-        cantidadVendida:
-          type: integer
-        cantidadRestante:
+        totalCamisetas:
           type: integer
         totalVenta:
           type: number
+        utilidad:
+          type: number
+
+    ReporteVentaDiaria:
+      type: object
+      required: [fecha, numVentas, totalCamisetas, total, utilidad]
+      properties:
+        fecha:
+          type: string
+        numVentas:
+          type: integer
+        totalCamisetas:
+          type: integer
+        total:
+          type: number
+        utilidad:
+          type: number
+    ReporteVentaItem:
+      type: object
+      required: [id, camisetaId, talla, cantidad, precioUnitario, subtotal, utilidad]
+      properties:
+        id:
+          type: integer
+        camisetaId:
+          type: integer
+        nombreEquipo:
+          type: ["string", "null"]
+        descripcion:
+          type: ["string", "null"]
+        urlImagen:
+          type: ["string", "null"]
+        talla:
+          $ref: "#/components/schemas/Talla"
+        cantidad:
+          type: integer
+        precioUnitario:
+          type: number
+        subtotal:
+          type: number
+        utilidad:
+          type: number
+        maletaId:
+          type: ["integer", "null"]
+        codigoMaleta:
+          type: ["string", "null"]
+    ReporteVenta:
+      type: object
+      required: [id, fecha, totalCamisetas, total, utilidad, items]
+      properties:
+        id:
+          type: integer
+        fecha:
+          type: string
+        totalCamisetas:
+          type: integer
+        total:
+          type: number
+        utilidad:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReporteVentaItem"
+    ReporteVentaDiariaDetalle:
+      type: object
+      required: [fecha, numVentas, totalCamisetas, total, utilidad, ventas]
+      properties:
+        fecha:
+          type: string
+        numVentas:
+          type: integer
+        totalCamisetas:
+          type: integer
+        total:
+          type: number
+        utilidad:
+          type: number
+        ventas:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReporteVenta"
 
     TrasladoInput:
       type: object

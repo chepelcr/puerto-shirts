@@ -6,9 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface VentaResultado {
-  ventaId: number;
+export interface ReporteVentaDiaria {
+  fecha: string;
+  numVentas: number;
   totalCamisetas: number;
-  totalVenta: number;
+  total: number;
   utilidad: number;
 }

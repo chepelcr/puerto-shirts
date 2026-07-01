@@ -1,8 +1,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { sql, eq, and, desc, asc } from "drizzle-orm";
+import { sql, eq, desc, asc, inArray } from "drizzle-orm";
 import {
   db,
-  kardexTable,
+  ventasTable,
+  ventaDetallesTable,
   camisetasTable,
   equiposTable,
   maletasTable,
@@ -11,20 +12,18 @@ import { num } from "../lib/http";
 
 const router: IRouter = Router();
 
-const TZ = "America/Costa_Rica";
-
-const fechaDia = sql<string>`to_char(${kardexTable.fecha} AT TIME ZONE ${TZ}, 'YYYY-MM-DD')`;
+const fechaDia = sql<string>`to_char(${ventasTable.fecha} AT TIME ZONE 'America/Costa_Rica', 'YYYY-MM-DD')`;
 
 router.get("/reportes/ventas-diarias", async (_req: Request, res: Response) => {
   const rows = await db
     .select({
       fecha: fechaDia,
-      totalCamisetas: sql<number>`sum(${kardexTable.cantidad})::int`,
-      totalVenta: sql<number>`coalesce(sum(${kardexTable.cantidad} * ${kardexTable.precioUnitario}), 0)::float`,
-      numTransacciones: sql<number>`count(*)::int`,
+      numVentas: sql<number>`count(*)::int`,
+      totalCamisetas: sql<number>`coalesce(sum(${ventasTable.totalCamisetas}), 0)::int`,
+      total: sql<number>`coalesce(sum(${ventasTable.total}), 0)::float`,
+      utilidad: sql<number>`coalesce(sum(${ventasTable.utilidad}), 0)::float`,
     })
-    .from(kardexTable)
-    .where(eq(kardexTable.tipoMovimiento, "venta"))
+    .from(ventasTable)
     .groupBy(fechaDia)
     .orderBy(desc(fechaDia));
 
@@ -34,62 +33,102 @@ router.get("/reportes/ventas-diarias", async (_req: Request, res: Response) => {
 router.get(
   "/reportes/ventas-diarias/:fecha",
   async (req: Request, res: Response) => {
-    const fecha = req.params.fecha;
+    const fecha = String(req.params.fecha);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
       res.status(422).json({ error: "Fecha inválida (formato YYYY-MM-DD)" });
       return;
     }
 
-    const rows = await db
+    const ventas = await db
       .select({
-        id: kardexTable.id,
-        camisetaId: kardexTable.camisetaId,
-        nombreEquipo: equiposTable.nombreEquipo,
-        descripcion: camisetasTable.descripcion,
-        urlImagen: camisetasTable.urlImagen,
-        talla: kardexTable.talla,
-        cantidad: kardexTable.cantidad,
-        precioUnitario: kardexTable.precioUnitario,
-        maletaId: kardexTable.maletaId,
-        codigoMaleta: maletasTable.codigoMaleta,
-        fecha: kardexTable.fecha,
+        id: ventasTable.id,
+        totalCamisetas: ventasTable.totalCamisetas,
+        total: ventasTable.total,
+        utilidad: ventasTable.utilidad,
+        fecha: ventasTable.fecha,
       })
-      .from(kardexTable)
-      .innerJoin(camisetasTable, eq(kardexTable.camisetaId, camisetasTable.id))
-      .innerJoin(equiposTable, eq(camisetasTable.equipoId, equiposTable.id))
-      .leftJoin(maletasTable, eq(kardexTable.maletaId, maletasTable.id))
-      .where(
-        and(
-          eq(kardexTable.tipoMovimiento, "venta"),
-          sql`${fechaDia} = ${fecha}`,
-        ),
-      )
-      .orderBy(asc(kardexTable.fecha));
+      .from(ventasTable)
+      .where(sql`${fechaDia} = ${fecha}`)
+      .orderBy(asc(ventasTable.fecha));
+
+    const ventaIds = ventas.map((v) => v.id);
+
+    const detalles = ventaIds.length
+      ? await db
+          .select({
+            id: ventaDetallesTable.id,
+            ventaId: ventaDetallesTable.ventaId,
+            camisetaId: ventaDetallesTable.camisetaId,
+            nombreEquipo: equiposTable.nombreEquipo,
+            descripcion: camisetasTable.descripcion,
+            urlImagen: camisetasTable.urlImagen,
+            talla: ventaDetallesTable.talla,
+            cantidad: ventaDetallesTable.cantidad,
+            precioUnitario: ventaDetallesTable.precioUnitario,
+            subtotal: ventaDetallesTable.subtotal,
+            utilidad: ventaDetallesTable.utilidad,
+            maletaId: ventaDetallesTable.maletaId,
+            codigoMaleta: maletasTable.codigoMaleta,
+          })
+          .from(ventaDetallesTable)
+          .innerJoin(
+            camisetasTable,
+            eq(ventaDetallesTable.camisetaId, camisetasTable.id),
+          )
+          .innerJoin(equiposTable, eq(camisetasTable.equipoId, equiposTable.id))
+          .leftJoin(
+            maletasTable,
+            eq(ventaDetallesTable.maletaId, maletasTable.id),
+          )
+          .where(inArray(ventaDetallesTable.ventaId, ventaIds))
+          .orderBy(asc(ventaDetallesTable.id))
+      : [];
+
+    const itemsPorVenta = new Map<number, typeof detalles>();
+    for (const d of detalles) {
+      const list = itemsPorVenta.get(d.ventaId) ?? [];
+      list.push(d);
+      itemsPorVenta.set(d.ventaId, list);
+    }
 
     let totalCamisetas = 0;
-    let totalVenta = 0;
-    const ventas = rows.map((r) => {
-      const precio = num(r.precioUnitario);
-      const subtotal = precio * r.cantidad;
-      totalCamisetas += r.cantidad;
-      totalVenta += subtotal;
+    let total = 0;
+    let utilidad = 0;
+    const ventasOut = ventas.map((v) => {
+      totalCamisetas += v.totalCamisetas;
+      total += num(v.total);
+      utilidad += num(v.utilidad);
       return {
-        id: r.id,
-        camisetaId: r.camisetaId,
-        nombreEquipo: r.nombreEquipo,
-        descripcion: r.descripcion,
-        urlImagen: r.urlImagen,
-        talla: r.talla,
-        cantidad: r.cantidad,
-        precioUnitario: precio,
-        subtotal,
-        maletaId: r.maletaId,
-        codigoMaleta: r.codigoMaleta,
-        fecha: r.fecha.toISOString(),
+        id: v.id,
+        fecha: v.fecha.toISOString(),
+        totalCamisetas: v.totalCamisetas,
+        total: num(v.total),
+        utilidad: num(v.utilidad),
+        items: (itemsPorVenta.get(v.id) ?? []).map((d) => ({
+          id: d.id,
+          camisetaId: d.camisetaId,
+          nombreEquipo: d.nombreEquipo,
+          descripcion: d.descripcion,
+          urlImagen: d.urlImagen,
+          talla: d.talla,
+          cantidad: d.cantidad,
+          precioUnitario: num(d.precioUnitario),
+          subtotal: num(d.subtotal),
+          utilidad: num(d.utilidad),
+          maletaId: d.maletaId,
+          codigoMaleta: d.codigoMaleta,
+        })),
       };
     });
 
-    res.json({ fecha, totalCamisetas, totalVenta, ventas });
+    res.json({
+      fecha,
+      numVentas: ventas.length,
+      totalCamisetas,
+      total,
+      utilidad,
+      ventas: ventasOut,
+    });
   },
 );
 

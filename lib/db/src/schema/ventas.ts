@@ -14,6 +14,17 @@ import { tallaEnum } from "./enums";
 
 export const ventasTable = pgTable("ventas", {
   id: serial("id").primaryKey(),
+  totalCamisetas: integer("total_camisetas").notNull(),
+  total: numeric("total", { precision: 12, scale: 2 }).notNull(),
+  utilidad: numeric("utilidad", { precision: 12, scale: 2 }).notNull(),
+  fecha: timestamp("fecha", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const ventaDetallesTable = pgTable("venta_detalles", {
+  id: serial("id").primaryKey(),
+  ventaId: integer("venta_id")
+    .notNull()
+    .references(() => ventasTable.id, { onDelete: "cascade" }),
   inventarioId: integer("inventario_id").references(() => inventarioTable.id),
   camisetaId: integer("camiseta_id")
     .notNull()
@@ -26,14 +37,18 @@ export const ventasTable = pgTable("ventas", {
     precision: 12,
     scale: 2,
   }).notNull(),
-  total: numeric("total", { precision: 12, scale: 2 }).notNull(),
+  subtotal: numeric("subtotal", { precision: 12, scale: 2 }).notNull(),
   utilidad: numeric("utilidad", { precision: 12, scale: 2 }).notNull(),
-  fecha: timestamp("fecha", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const insertVentaSchema = createInsertSchema(ventasTable).omit({
   id: true,
   fecha: true,
 });
+export const insertVentaDetalleSchema = createInsertSchema(
+  ventaDetallesTable,
+).omit({ id: true });
 export type InsertVenta = z.infer<typeof insertVentaSchema>;
+export type InsertVentaDetalle = z.infer<typeof insertVentaDetalleSchema>;
 export type Venta = typeof ventasTable.$inferSelect;
+export type VentaDetalle = typeof ventaDetallesTable.$inferSelect;

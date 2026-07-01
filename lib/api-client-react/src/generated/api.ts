@@ -47,6 +47,8 @@ import type {
   Proveedor,
   ProveedorInput,
   ProveedorUpdate,
+  ReporteVentaDiaria,
+  ReporteVentaDiariaDetalle,
   TrasladoInput,
   TrasladoResultado,
   UploadUrlRequest,
@@ -2596,6 +2598,162 @@ export function useGetDashboardResumen<TData = Awaited<ReturnType<typeof getDash
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetDashboardResumenQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetReporteVentasDiariasUrl = () => {
+
+
+
+
+  return `/api/reportes/ventas-diarias`
+}
+
+/**
+ * Resumen de ventas agrupadas por día (zona horaria de Costa Rica), con total de camisetas, ingresos y utilidad.
+ * @summary Reporte de ventas por día
+ */
+export const getReporteVentasDiarias = async ( options?: RequestInit): Promise<ReporteVentaDiaria[]> => {
+
+  return customFetch<ReporteVentaDiaria[]>(getGetReporteVentasDiariasUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetReporteVentasDiariasQueryKey = () => {
+    return [
+    `/api/reportes/ventas-diarias`
+    ] as const;
+    }
+
+
+export const getGetReporteVentasDiariasQueryOptions = <TData = Awaited<ReturnType<typeof getReporteVentasDiarias>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getReporteVentasDiarias>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetReporteVentasDiariasQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getReporteVentasDiarias>>> = ({ signal }) => getReporteVentasDiarias({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getReporteVentasDiarias>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetReporteVentasDiariasQueryResult = NonNullable<Awaited<ReturnType<typeof getReporteVentasDiarias>>>
+export type GetReporteVentasDiariasQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Reporte de ventas por día
+ */
+
+export function useGetReporteVentasDiarias<TData = Awaited<ReturnType<typeof getReporteVentasDiarias>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getReporteVentasDiarias>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetReporteVentasDiariasQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetReporteVentasDiariasDetalleUrl = (fecha: string,) => {
+
+
+
+
+  return `/api/reportes/ventas-diarias/${fecha}`
+}
+
+/**
+ * Todas las ventas registradas en un día específico, con las camisetas vendidas en cada venta.
+ * @summary Detalle de ventas de un día
+ */
+export const getReporteVentasDiariasDetalle = async (fecha: string, options?: RequestInit): Promise<ReporteVentaDiariaDetalle> => {
+
+  return customFetch<ReporteVentaDiariaDetalle>(getGetReporteVentasDiariasDetalleUrl(fecha),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetReporteVentasDiariasDetalleQueryKey = (fecha: string,) => {
+    return [
+    `/api/reportes/ventas-diarias/${fecha}`
+    ] as const;
+    }
+
+
+export const getGetReporteVentasDiariasDetalleQueryOptions = <TData = Awaited<ReturnType<typeof getReporteVentasDiariasDetalle>>, TError = ErrorType<ValidationErrorResponse>>(fecha: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getReporteVentasDiariasDetalle>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetReporteVentasDiariasDetalleQueryKey(fecha);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getReporteVentasDiariasDetalle>>> = ({ signal }) => getReporteVentasDiariasDetalle(fecha, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: fecha !== null && fecha !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getReporteVentasDiariasDetalle>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetReporteVentasDiariasDetalleQueryResult = NonNullable<Awaited<ReturnType<typeof getReporteVentasDiariasDetalle>>>
+export type GetReporteVentasDiariasDetalleQueryError = ErrorType<ValidationErrorResponse>
+
+
+/**
+ * @summary Detalle de ventas de un día
+ */
+
+export function useGetReporteVentasDiariasDetalle<TData = Awaited<ReturnType<typeof getReporteVentasDiariasDetalle>>, TError = ErrorType<ValidationErrorResponse>>(
+ fecha: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getReporteVentasDiariasDetalle>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetReporteVentasDiariasDetalleQueryOptions(fecha,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

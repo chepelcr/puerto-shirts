@@ -528,16 +528,19 @@ export const IngresarInventarioResponse = zod.object({
 
 
 
+
 export const RegistrarVentaBody = zod.object({
+  "items": zod.array(zod.object({
   "inventarioId": zod.number(),
   "cantidad": zod.number().min(1)
+})).min(1)
 })
 
 export const RegistrarVentaResponse = zod.object({
-  "inventarioId": zod.number(),
-  "cantidadVendida": zod.number(),
-  "cantidadRestante": zod.number(),
-  "totalVenta": zod.number()
+  "ventaId": zod.number(),
+  "totalCamisetas": zod.number(),
+  "totalVenta": zod.number(),
+  "utilidad": zod.number()
 })
 
 
@@ -608,6 +611,58 @@ export const GetDashboardResumenResponse = zod.object({
   "talla": zod.enum(['S', 'M', 'L', 'XL', 'XXL', 'XXXL']),
   "cantidad": zod.number(),
   "stockBajo": zod.boolean()
+}))
+}))
+})
+
+
+/**
+ * Resumen de ventas agrupadas por día (zona horaria de Costa Rica), con total de camisetas, ingresos y utilidad.
+ * @summary Reporte de ventas por día
+ */
+export const GetReporteVentasDiariasResponseItem = zod.object({
+  "fecha": zod.string(),
+  "numVentas": zod.number(),
+  "totalCamisetas": zod.number(),
+  "total": zod.number(),
+  "utilidad": zod.number()
+})
+export const GetReporteVentasDiariasResponse = zod.array(GetReporteVentasDiariasResponseItem)
+
+
+/**
+ * Todas las ventas registradas en un día específico, con las camisetas vendidas en cada venta.
+ * @summary Detalle de ventas de un día
+ */
+export const GetReporteVentasDiariasDetalleParams = zod.object({
+  "fecha": zod.coerce.string()
+})
+
+export const GetReporteVentasDiariasDetalleResponse = zod.object({
+  "fecha": zod.string(),
+  "numVentas": zod.number(),
+  "totalCamisetas": zod.number(),
+  "total": zod.number(),
+  "utilidad": zod.number(),
+  "ventas": zod.array(zod.object({
+  "id": zod.number(),
+  "fecha": zod.string(),
+  "totalCamisetas": zod.number(),
+  "total": zod.number(),
+  "utilidad": zod.number(),
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "camisetaId": zod.number(),
+  "nombreEquipo": zod.string().nullish(),
+  "descripcion": zod.string().nullish(),
+  "urlImagen": zod.string().nullish(),
+  "talla": zod.enum(['S', 'M', 'L', 'XL', 'XXL', 'XXXL']),
+  "cantidad": zod.number(),
+  "precioUnitario": zod.number(),
+  "subtotal": zod.number(),
+  "utilidad": zod.number(),
+  "maletaId": zod.number().nullish(),
+  "codigoMaleta": zod.string().nullish()
 }))
 }))
 })

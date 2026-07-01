@@ -7,6 +7,8 @@ import {
   Users, 
   Truck, 
   History,
+  ShoppingCart,
+  BarChart3,
   Menu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +29,8 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: Home },
+    { href: "/ventas/nueva", label: "Nueva venta", icon: ShoppingCart },
+    { href: "/reportes", label: "Reportes", icon: BarChart3 },
     { href: "/camisetas", label: "Camisetas", icon: Shirt },
     { href: "/maletas", label: "Maletas", icon: Briefcase },
     { href: "/lotes", label: "Lotes", icon: Truck },
