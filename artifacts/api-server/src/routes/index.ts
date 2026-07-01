@@ -9,6 +9,7 @@ import lotesRouter from "./lotes";
 import inventarioRouter from "./inventario";
 import kardexRouter from "./kardex";
 import dashboardRouter from "./dashboard";
+import reportesRouter from "./reportes";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(lotesRouter);
 router.use(inventarioRouter);
 router.use(kardexRouter);
 router.use(dashboardRouter);
+router.use(reportesRouter);
 
 export default router;

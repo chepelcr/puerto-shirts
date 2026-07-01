@@ -1,7 +1,7 @@
 export function money(n: number | null | undefined): string {
   const v = typeof n === "number" ? n : 0;
-  return `$${v.toLocaleString("es-CO", {
-    minimumFractionDigits: 2,
+  return `₡${v.toLocaleString("es-CR", {
+    minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   })}`;
 }

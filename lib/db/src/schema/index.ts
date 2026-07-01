@@ -6,3 +6,4 @@ export * from "./camisetas";
 export * from "./lotes";
 export * from "./inventario";
 export * from "./kardex";
+export * from "./ventas";
