@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Single shared S3 bucket used to stage the API Gateway SAM template during
+  `sam deploy` (both dev and prod). Deploy once during bootstrap.
+
+Resources:
+  SamDeploymentsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: puerto-shirts-sam-deployments
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-old-templates
+            Status: Enabled
+            ExpirationInDays: 7
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+Outputs:
+  BucketName:
+    Value: !Ref SamDeploymentsBucket
+    Export:
+      Name: puerto-shirts-sam-deployments-bucket

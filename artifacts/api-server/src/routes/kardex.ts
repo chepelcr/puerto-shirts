@@ -12,6 +12,18 @@ import { num } from "../lib/http";
 
 const router: IRouter = Router();
 
+/**
+ * @swagger
+ * /api/kardex:
+ *   get:
+ *     summary: List kardex movements (entrada/venta/traslado)
+ *     tags: [Kardex]
+ *     parameters:
+ *       - { in: query, name: tipoMovimiento, required: false, schema: { type: string, enum: [entrada, venta, traslado] } }
+ *       - { in: query, name: camisetaId, required: false, schema: { type: integer } }
+ *     responses:
+ *       200: { description: Kardex movements }
+ */
 router.get("/kardex", async (req: Request, res: Response) => {
   const maletaOrigen = alias(maletasTable, "maleta_origen");
   const maletaDestino = alias(maletasTable, "maleta_destino");

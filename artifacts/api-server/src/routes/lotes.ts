@@ -6,6 +6,56 @@ import { num, parseId, toDateString } from "../lib/http";
 
 const router: IRouter = Router();
 
+/**
+ * @swagger
+ * /api/lotes:
+ *   get:
+ *     summary: List lotes
+ *     tags: [Lotes]
+ *     parameters:
+ *       - { in: query, name: tipoCompra, required: false, schema: { type: string, enum: [contado, credito] } }
+ *       - { in: query, name: proveedorId, required: false, schema: { type: integer } }
+ *     responses:
+ *       200: { description: List of lotes }
+ *   post:
+ *     summary: Create a lote
+ *     tags: [Lotes]
+ *     requestBody:
+ *       required: true
+ *       content: { application/json: { schema: { type: object } } }
+ *     responses:
+ *       201: { description: Created }
+ *       422: { description: Validation error }
+ * /api/lotes/{id}:
+ *   get:
+ *     summary: Get a lote by id
+ *     tags: [Lotes]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     responses:
+ *       200: { description: Lote }
+ *       404: { description: Not found }
+ *   patch:
+ *     summary: Update a lote
+ *     tags: [Lotes]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     requestBody:
+ *       required: true
+ *       content: { application/json: { schema: { type: object } } }
+ *     responses:
+ *       200: { description: Updated }
+ *       404: { description: Not found }
+ *       422: { description: Validation error }
+ *   delete:
+ *     summary: Delete a lote
+ *     tags: [Lotes]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     responses:
+ *       204: { description: Deleted }
+ *       404: { description: Not found }
+ */
 router.get("/lotes", async (req: Request, res: Response) => {
   const filters: SQL[] = [];
   const tipoCompra = req.query.tipoCompra;

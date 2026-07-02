@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  puerto-shirts SSM Parameters. One parameter per key under
+  /pacific/{env}/puerto-shirts. DB credentials are NOT here — they live in
+  Secrets Manager under pacific/{env}/puerto-shirts/database.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, prod]
+  DbSecretName:
+    Type: String
+    Default: pacific/dev/puerto-shirts/database
+    Description: Secrets Manager secret name for the database credentials
+  ApiUrl:
+    Type: String
+    Description: Backend API URL (e.g. https://api.shirts.jcampos.dev)
+  FrontendUrl:
+    Type: String
+    Description: Frontend URL (e.g. https://shirts.jcampos.dev)
+  UploadsUrl:
+    Type: String
+    Description: Public uploads/CDN URL (e.g. https://uploads.shirts.jcampos.dev)
+  UploadsBucket:
+    Type: String
+    Description: S3 uploads bucket name
+
+Resources:
+  AwsStage:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/pacific/${Environment}/puerto-shirts/aws/stage"
+      Type: String
+      Value: !Ref Environment
+
+  AwsRegion:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/pacific/${Environment}/puerto-shirts/aws/region"
+      Type: String
+      Value: !Ref AWS::Region
+
+  AwsDatabase:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/pacific/${Environment}/puerto-shirts/aws/database"
+      Type: String
+      Value: !Ref DbSecretName
+      Description: Secrets Manager secret name for database credentials
+
+  S3UploadsBucket:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/pacific/${Environment}/puerto-shirts/s3/uploads-bucket"
+      Type: String
+      Value: !Ref UploadsBucket
+
+  UploadsUrlParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/pacific/${Environment}/puerto-shirts/uploads/url"
+      Type: String
+      Value: !Ref UploadsUrl
+
+  ApiUrlParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/pacific/${Environment}/puerto-shirts/api/url"
+      Type: String
+      Value: !Ref ApiUrl
+
+  FrontendUrlParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/pacific/${Environment}/puerto-shirts/frontend/url"
+      Type: String
+      Value: !Ref FrontendUrl
+
+Outputs:
+  SsmBasePath:
+    Value: !Sub "/pacific/${Environment}/puerto-shirts"
+    Export:
+      Name: !Sub "pacific-${Environment}-puerto-shirts-ssm-base-path"

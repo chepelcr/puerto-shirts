@@ -1,0 +1,69 @@
+# Backend → AWS (full tsuru pattern, automatic on push).
+# One workflow does all three phases like tsuru management-be:
+#   1. build the Lambda bundle
+#   2. update the Lambda function code
+#   3. regenerate + `sam deploy` the API Gateway (empty changeset = fast no-op
+#      when no endpoints changed)
+# Monorepo path-scoped; defaults to prod (the only deployed env). Use
+# workflow_dispatch to target dev once its stacks exist.
+name: Deploy BE (Lambda + API Gateway)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "artifacts/api-server/**"
+      - "lib/**"
+      - "scripts/**"
+      - "api-gateway/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/deploy-be.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [prod, dev]
+        default: prod
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-be-${{ github.event.inputs.environment || 'prod' }}
+  cancel-in-progress: false
+
+env:
+  ENVIRONMENT: ${{ github.event.inputs.environment || 'prod' }}
+  REGION: us-east-1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ENVIRONMENT == 'dev' && secrets.AWS_DEPLOY_ROLE_ARN_DEV || secrets.AWS_DEPLOY_ROLE_ARN_PROD }}
+          aws-region: ${{ env.REGION }}
+      - run: pnpm install --frozen-lockfile
+      - name: Install SAM CLI
+        run: pip3 install aws-sam-cli pyyaml
+      - name: Build lambda package
+        run: bash scripts/pipeline-build.sh
+      - name: Update Lambda function code
+        run: bash scripts/pipeline-update.sh
+      - name: Refresh swagger + deploy API Gateway
+        run: bash scripts/pipeline-api.sh

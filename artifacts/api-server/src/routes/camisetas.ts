@@ -14,6 +14,74 @@ import { num, parseId } from "../lib/http";
 
 const router: IRouter = Router();
 
+/**
+ * @swagger
+ * /api/camisetas:
+ *   get:
+ *     summary: List camisetas
+ *     tags: [Camisetas]
+ *     responses:
+ *       200: { description: List of camisetas }
+ *   post:
+ *     summary: Create a camiseta
+ *     tags: [Camisetas]
+ *     requestBody:
+ *       required: true
+ *       content: { application/json: { schema: { type: object } } }
+ *     responses:
+ *       201: { description: Created }
+ *       422: { description: Validation error }
+ * /api/camisetas/{id}:
+ *   get:
+ *     summary: Get a camiseta by id
+ *     tags: [Camisetas]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: Camiseta }
+ *       404: { description: Not found }
+ *   patch:
+ *     summary: Update a camiseta
+ *     tags: [Camisetas]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content: { application/json: { schema: { type: object } } }
+ *     responses:
+ *       200: { description: Updated }
+ *       404: { description: Not found }
+ *       422: { description: Validation error }
+ *   delete:
+ *     summary: Delete a camiseta
+ *     tags: [Camisetas]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       204: { description: Deleted }
+ *       404: { description: Not found }
+ * /api/camisetas/{id}/detalle:
+ *   get:
+ *     summary: Get a camiseta with inventory breakdown
+ *     tags: [Camisetas]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: Camiseta detail }
+ *       404: { description: Not found }
+ */
 router.get("/camisetas", async (_req: Request, res: Response) => {
   const rows = await db
     .select({

@@ -1,0 +1,122 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  puerto-shirts uploads bucket: a public-read S3 bucket behind CloudFront
+  (uploads[-dev].shirts.jcampos.dev) for user-uploaded images. Mirrors the
+  store-be s3-uploads pattern. Deploy once per environment BEFORE the Lambda
+  stack (the Lambda's role is granted PutObject on this bucket).
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, prod]
+
+  DomainName:
+    Type: String
+    Description: Custom domain for the CloudFront distribution (e.g. uploads.shirts.jcampos.dev)
+
+  FrontEndDomainName:
+    Type: String
+    Default: shirts.jcampos.dev
+    Description: Frontend origin allowed to PUT to the bucket (CORS)
+
+  HostedZoneId:
+    Type: String
+    Description: Route53 Hosted Zone ID for jcampos.dev
+
+Resources:
+  SSLCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DomainName
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref HostedZoneId
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "puerto-shirts-${Environment}-uploads"
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - "http://localhost:5173"
+              - "http://localhost:4173"
+              - !Sub "https://${DomainName}"
+              - !Sub "https://${FrontEndDomainName}"
+            AllowedMethods: [PUT, POST, GET, HEAD]
+            AllowedHeaders: ["*"]
+            MaxAge: 3000
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: "*"
+            Action: "s3:GetObject"
+            Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt S3Bucket.DomainName
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+        Enabled: true
+        Aliases:
+          - !Ref DomainName
+        ViewerCertificate:
+          AcmCertificateArn: !Ref SSLCertificate
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]
+          CachedMethods: [GET, HEAD]
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+            Headers:
+              - Origin
+              - Access-Control-Request-Headers
+              - Access-Control-Request-Method
+          Compress: true
+        PriceClass: PriceClass_100
+
+  DnsRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref DomainName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt CloudFrontDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+
+Outputs:
+  S3BucketName:
+    Description: Uploads S3 bucket name
+    Value: !Ref S3Bucket
+    Export:
+      Name: !Sub "puerto-shirts-${Environment}-uploads-bucket"
+  S3BucketArn:
+    Value: !GetAtt S3Bucket.Arn
+    Export:
+      Name: !Sub "puerto-shirts-${Environment}-uploads-bucket-arn"
+  CustomDomainURL:
+    Value: !Sub "https://${DomainName}"

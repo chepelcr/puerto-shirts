@@ -1,0 +1,113 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  GitHub Actions OIDC deploy role for chepelcr/puerto-shirts.
+  Trusts the shared account-global GitHub OIDC provider; scoped to this repo only.
+  Deploy once per environment with an admin profile (creates IAM):
+    aws cloudformation deploy --template-file cloudformation/deploy-role.yml \
+      --stack-name puerto-shirts-dev-deploy-role \
+      --capabilities CAPABILITY_NAMED_IAM \
+      --parameter-overrides Environment=dev --profile PACIFIC-PROD
+  Then store the DeployRoleArn output as the repo secret AWS_DEPLOY_ROLE_ARN_DEV / _PROD.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, prod]
+  GitHubRepo:
+    Type: String
+    Default: chepelcr/puerto-shirts
+    Description: org/repo allowed to assume this role via OIDC
+
+Resources:
+  DeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "puerto-shirts-${Environment}-github-deploy"
+      Description: !Sub "GitHub Actions deploy role for ${GitHubRepo} (${Environment})"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com"
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubRepo}:*"
+      Policies:
+        - PolicyName: lambda-code-update
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:GetFunction
+                  - lambda:UpdateFunctionCode
+                  - lambda:AddPermission
+                  - lambda:RemovePermission
+                Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:puerto-shirts-${Environment}-api-handler"
+        - PolicyName: api-gateway-sam-deploy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: cloudformation:*
+                Resource:
+                  - !Sub "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/puerto-shirts-${Environment}-api-gateway/*"
+              - Effect: Allow
+                Action: cloudformation:CreateChangeSet
+                Resource: !Sub "arn:aws:cloudformation:${AWS::Region}:aws:transform/Serverless-2016-10-31"
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - "arn:aws:s3:::puerto-shirts-sam-deployments"
+                  - "arn:aws:s3:::puerto-shirts-sam-deployments/*"
+              - Effect: Allow
+                Action: apigateway:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - acm:RequestCertificate
+                  - acm:DescribeCertificate
+                  - acm:ListCertificates
+                  - acm:DeleteCertificate
+                  - acm:AddTagsToCertificate
+                  - acm:ListTagsForCertificate
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - route53:ListHostedZones
+                  - route53:ListHostedZonesByName
+                  - route53:GetHostedZone
+                  - route53:ChangeResourceRecordSets
+                  - route53:GetChange
+                  - route53:ListResourceRecordSets
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:DeleteLogGroup
+                  - logs:DescribeLogGroups
+                  - logs:PutRetentionPolicy
+                  - logs:TagResource
+                  - logs:ListTagsForResource
+                Resource: "*"
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    iam:PassedToService: apigateway.amazonaws.com
+
+Outputs:
+  DeployRoleArn:
+    Description: Store as the AWS_DEPLOY_ROLE_ARN_DEV / _PROD repo secret
+    Value: !GetAtt DeployRole.Arn
+    Export:
+      Name: !Sub "puerto-shirts-${Environment}-deploy-role-arn"

@@ -1,0 +1,23 @@
+version = 0.1
+
+# Single shared staging bucket for both envs (created by cloudformation/sam-bucket.yml).
+
+[dev]
+[dev.global.parameters]
+stack_name          = "puerto-shirts-dev-api-gateway"
+s3_bucket           = "puerto-shirts-sam-deployments"
+s3_prefix           = "puerto-shirts-dev-api-gateway"
+region              = "us-east-1"
+confirm_changeset   = false
+capabilities        = "CAPABILITY_IAM"
+parameter_overrides = "Environment=dev DomainName=api-dev.shirts.jcampos.dev"
+
+[prod]
+[prod.global.parameters]
+stack_name          = "puerto-shirts-prod-api-gateway"
+s3_bucket           = "puerto-shirts-sam-deployments"
+s3_prefix           = "puerto-shirts-prod-api-gateway"
+region              = "us-east-1"
+confirm_changeset   = false
+capabilities        = "CAPABILITY_IAM"
+parameter_overrides = "Environment=prod DomainName=api.shirts.jcampos.dev"

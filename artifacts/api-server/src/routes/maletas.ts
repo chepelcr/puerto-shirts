@@ -12,6 +12,61 @@ import { num, parseId } from "../lib/http";
 
 const router: IRouter = Router();
 
+/**
+ * @swagger
+ * /api/maletas:
+ *   get:
+ *     summary: List maletas
+ *     tags: [Maletas]
+ *     responses:
+ *       200: { description: List of maletas }
+ *   post:
+ *     summary: Create a maleta
+ *     tags: [Maletas]
+ *     requestBody:
+ *       required: true
+ *       content: { application/json: { schema: { type: object } } }
+ *     responses:
+ *       201: { description: Created }
+ *       422: { description: Validation error }
+ * /api/maletas/{id}:
+ *   get:
+ *     summary: Get a maleta by id
+ *     tags: [Maletas]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     responses:
+ *       200: { description: Maleta }
+ *       404: { description: Not found }
+ *   patch:
+ *     summary: Update a maleta
+ *     tags: [Maletas]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     requestBody:
+ *       required: true
+ *       content: { application/json: { schema: { type: object } } }
+ *     responses:
+ *       200: { description: Updated }
+ *       404: { description: Not found }
+ *       422: { description: Validation error }
+ *   delete:
+ *     summary: Delete a maleta
+ *     tags: [Maletas]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     responses:
+ *       204: { description: Deleted }
+ *       404: { description: Not found }
+ * /api/maletas/{id}/contenido:
+ *   get:
+ *     summary: List inventory contained in a maleta
+ *     tags: [Maletas]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     responses:
+ *       200: { description: Maleta contents }
+ */
 router.get("/maletas", async (_req: Request, res: Response) => {
   const rows = await db.select().from(maletasTable).orderBy(maletasTable.codigoMaleta);
   res.json(rows);

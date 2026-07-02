@@ -6,6 +6,53 @@ import { parseId } from "../lib/http";
 
 const router: IRouter = Router();
 
+/**
+ * @swagger
+ * /api/equipos:
+ *   get:
+ *     summary: List equipos
+ *     tags: [Equipos]
+ *     responses:
+ *       200: { description: List of equipos }
+ *   post:
+ *     summary: Create an equipo
+ *     tags: [Equipos]
+ *     requestBody:
+ *       required: true
+ *       content: { application/json: { schema: { type: object } } }
+ *     responses:
+ *       201: { description: Created }
+ *       422: { description: Validation error }
+ * /api/equipos/{id}:
+ *   get:
+ *     summary: Get an equipo by id
+ *     tags: [Equipos]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     responses:
+ *       200: { description: Equipo }
+ *       404: { description: Not found }
+ *   patch:
+ *     summary: Update an equipo
+ *     tags: [Equipos]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     requestBody:
+ *       required: true
+ *       content: { application/json: { schema: { type: object } } }
+ *     responses:
+ *       200: { description: Updated }
+ *       404: { description: Not found }
+ *       422: { description: Validation error }
+ *   delete:
+ *     summary: Delete an equipo
+ *     tags: [Equipos]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     responses:
+ *       204: { description: Deleted }
+ *       404: { description: Not found }
+ */
 router.get("/equipos", async (_req: Request, res: Response) => {
   const rows = await db.select().from(equiposTable).orderBy(equiposTable.nombreEquipo);
   res.json(rows);
