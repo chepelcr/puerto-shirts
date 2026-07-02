@@ -14,6 +14,24 @@ const router: IRouter = Router();
 
 const fechaDia = sql<string>`to_char(${ventasTable.fecha} AT TIME ZONE 'America/Costa_Rica', 'YYYY-MM-DD')`;
 
+/**
+ * @swagger
+ * /api/reportes/ventas-diarias:
+ *   get:
+ *     summary: Daily sales report (aggregated per day)
+ *     tags: [Reportes]
+ *     responses:
+ *       200: { description: Daily sales rows }
+ * /api/reportes/ventas-diarias/{fecha}:
+ *   get:
+ *     summary: Sales detail for a specific day
+ *     tags: [Reportes]
+ *     parameters:
+ *       - { in: path, name: fecha, required: true, schema: { type: string }, description: "Date (YYYY-MM-DD)" }
+ *     responses:
+ *       200: { description: Sales detail for the day }
+ *       422: { description: Invalid date }
+ */
 router.get("/reportes/ventas-diarias", async (_req: Request, res: Response) => {
   const rows = await db
     .select({

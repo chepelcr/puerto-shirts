@@ -22,6 +22,70 @@ const router: IRouter = Router();
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
 
+/**
+ * @swagger
+ * /api/inventario:
+ *   get:
+ *     summary: List inventory lines
+ *     tags: [Inventario]
+ *     parameters:
+ *       - { in: query, name: camisetaId, required: false, schema: { type: integer } }
+ *       - { in: query, name: maletaId, required: false, schema: { type: integer } }
+ *     responses:
+ *       200: { description: Inventory lines }
+ * /api/inventario/ingreso:
+ *   post:
+ *     summary: Add stock (entrada) to inventory
+ *     tags: [Inventario]
+ *     requestBody:
+ *       required: true
+ *       content: { application/json: { schema: { type: object } } }
+ *     responses:
+ *       201: { description: Stock added }
+ *       422: { description: Validation error }
+ * /api/inventario/venta:
+ *   post:
+ *     summary: Register a sale (venta) across inventory lines
+ *     tags: [Inventario]
+ *     requestBody:
+ *       required: true
+ *       content: { application/json: { schema: { type: object } } }
+ *     responses:
+ *       201: { description: Sale registered }
+ *       422: { description: Validation error }
+ *       500: { description: Sale error }
+ * /api/inventario/traslado:
+ *   post:
+ *     summary: Transfer stock between maletas
+ *     tags: [Inventario]
+ *     requestBody:
+ *       required: true
+ *       content: { application/json: { schema: { type: object } } }
+ *     responses:
+ *       201: { description: Transfer registered }
+ *       422: { description: Validation error }
+ *       500: { description: Transfer error }
+ * /api/inventario/exposicion/reset:
+ *   post:
+ *     summary: Clear the exhibited (expuesto) flag on all inventory
+ *     tags: [Inventario]
+ *     responses:
+ *       200: { description: Count of updated rows }
+ * /api/inventario/{id}/exposicion:
+ *   patch:
+ *     summary: Set the exhibited (expuesto) flag on an inventory line
+ *     tags: [Inventario]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     requestBody:
+ *       required: true
+ *       content: { application/json: { schema: { type: object } } }
+ *     responses:
+ *       200: { description: Updated }
+ *       400: { description: Invalid id }
+ *       404: { description: Not found }
+ *       422: { description: Validation error }
+ */
 router.get("/inventario", async (req: Request, res: Response) => {
   const filters: SQL[] = [];
   const camisetaId = req.query.camisetaId;

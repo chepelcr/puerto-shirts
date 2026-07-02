@@ -6,6 +6,53 @@ import { parseId } from "../lib/http";
 
 const router: IRouter = Router();
 
+/**
+ * @swagger
+ * /api/proveedores:
+ *   get:
+ *     summary: List proveedores
+ *     tags: [Proveedores]
+ *     responses:
+ *       200: { description: List of proveedores }
+ *   post:
+ *     summary: Create a proveedor
+ *     tags: [Proveedores]
+ *     requestBody:
+ *       required: true
+ *       content: { application/json: { schema: { type: object } } }
+ *     responses:
+ *       201: { description: Created }
+ *       422: { description: Validation error }
+ * /api/proveedores/{id}:
+ *   get:
+ *     summary: Get a proveedor by id
+ *     tags: [Proveedores]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     responses:
+ *       200: { description: Proveedor }
+ *       404: { description: Not found }
+ *   patch:
+ *     summary: Update a proveedor
+ *     tags: [Proveedores]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     requestBody:
+ *       required: true
+ *       content: { application/json: { schema: { type: object } } }
+ *     responses:
+ *       200: { description: Updated }
+ *       404: { description: Not found }
+ *       422: { description: Validation error }
+ *   delete:
+ *     summary: Delete a proveedor
+ *     tags: [Proveedores]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     responses:
+ *       204: { description: Deleted }
+ *       404: { description: Not found }
+ */
 router.get("/proveedores", async (_req: Request, res: Response) => {
   const rows = await db.select().from(proveedoresTable).orderBy(proveedoresTable.nombre);
   res.json(rows);

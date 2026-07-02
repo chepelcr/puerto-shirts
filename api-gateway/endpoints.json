@@ -1,0 +1,370 @@
+{
+  "base_url": "https://api.shirts.jcampos.dev",
+  "auth": "none (public)",
+  "services": [
+    {
+      "name": "puerto-shirts",
+      "endpoints": [
+        {
+          "path": "/api/camisetas",
+          "method": "GET",
+          "summary": "List camisetas",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/camisetas",
+          "method": "POST",
+          "summary": "Create a camiseta",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/camisetas/{id}",
+          "method": "GET",
+          "summary": "Get a camiseta by id",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/camisetas/{id}",
+          "method": "PATCH",
+          "summary": "Update a camiseta",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/camisetas/{id}",
+          "method": "DELETE",
+          "summary": "Delete a camiseta",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/camisetas/{id}/detalle",
+          "method": "GET",
+          "summary": "Get a camiseta with inventory breakdown",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/dashboard/resumen",
+          "method": "GET",
+          "summary": "Dashboard summary (totals + per-model stock cards)",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/equipos",
+          "method": "GET",
+          "summary": "List equipos",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/equipos",
+          "method": "POST",
+          "summary": "Create an equipo",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/equipos/{id}",
+          "method": "GET",
+          "summary": "Get an equipo by id",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/equipos/{id}",
+          "method": "PATCH",
+          "summary": "Update an equipo",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/equipos/{id}",
+          "method": "DELETE",
+          "summary": "Delete an equipo",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/healthz",
+          "method": "GET",
+          "summary": "Health check",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/inventario",
+          "method": "GET",
+          "summary": "List inventory lines",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": [
+            "camisetaId",
+            "maletaId"
+          ]
+        },
+        {
+          "path": "/api/inventario/exposicion/reset",
+          "method": "POST",
+          "summary": "Clear the exhibited (expuesto) flag on all inventory",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/inventario/ingreso",
+          "method": "POST",
+          "summary": "Add stock (entrada) to inventory",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/inventario/traslado",
+          "method": "POST",
+          "summary": "Transfer stock between maletas",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/inventario/venta",
+          "method": "POST",
+          "summary": "Register a sale (venta) across inventory lines",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/inventario/{id}/exposicion",
+          "method": "PATCH",
+          "summary": "Set the exhibited (expuesto) flag on an inventory line",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/kardex",
+          "method": "GET",
+          "summary": "List kardex movements (entrada/venta/traslado)",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": [
+            "tipoMovimiento",
+            "camisetaId"
+          ]
+        },
+        {
+          "path": "/api/lotes",
+          "method": "GET",
+          "summary": "List lotes",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": [
+            "tipoCompra",
+            "proveedorId"
+          ]
+        },
+        {
+          "path": "/api/lotes",
+          "method": "POST",
+          "summary": "Create a lote",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/lotes/{id}",
+          "method": "GET",
+          "summary": "Get a lote by id",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/lotes/{id}",
+          "method": "PATCH",
+          "summary": "Update a lote",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/lotes/{id}",
+          "method": "DELETE",
+          "summary": "Delete a lote",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/maletas",
+          "method": "GET",
+          "summary": "List maletas",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/maletas",
+          "method": "POST",
+          "summary": "Create a maleta",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/maletas/{id}",
+          "method": "GET",
+          "summary": "Get a maleta by id",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/maletas/{id}",
+          "method": "PATCH",
+          "summary": "Update a maleta",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/maletas/{id}",
+          "method": "DELETE",
+          "summary": "Delete a maleta",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/maletas/{id}/contenido",
+          "method": "GET",
+          "summary": "List inventory contained in a maleta",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/proveedores",
+          "method": "GET",
+          "summary": "List proveedores",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/proveedores",
+          "method": "POST",
+          "summary": "Create a proveedor",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/proveedores/{id}",
+          "method": "GET",
+          "summary": "Get a proveedor by id",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/proveedores/{id}",
+          "method": "PATCH",
+          "summary": "Update a proveedor",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/proveedores/{id}",
+          "method": "DELETE",
+          "summary": "Delete a proveedor",
+          "auth_required": false,
+          "path_params": [
+            "id"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/reportes/ventas-diarias",
+          "method": "GET",
+          "summary": "Daily sales report (aggregated per day)",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        },
+        {
+          "path": "/api/reportes/ventas-diarias/{fecha}",
+          "method": "GET",
+          "summary": "Sales detail for a specific day",
+          "auth_required": false,
+          "path_params": [
+            "fecha"
+          ],
+          "query_params": []
+        },
+        {
+          "path": "/api/storage/uploads/request-url",
+          "method": "POST",
+          "summary": "Request a presigned S3 URL for a file upload",
+          "auth_required": false,
+          "path_params": [],
+          "query_params": []
+        }
+      ]
+    }
+  ]
+}

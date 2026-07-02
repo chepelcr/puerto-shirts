@@ -1,0 +1,1015 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Camisas del Puerto API",
+    "version": "1.0.0",
+    "description": "Inventory & sales API for Camisas del Puerto (camisetas, equipos, lotes, maletas, kardex, reportes)."
+  },
+  "servers": [
+    {
+      "url": "https://api.shirts.jcampos.dev",
+      "description": "Production API"
+    },
+    {
+      "url": "http://localhost:5000",
+      "description": "Development API"
+    }
+  ],
+  "paths": {
+    "/api/storage/uploads/request-url": {
+      "post": {
+        "summary": "Request a presigned S3 URL for a file upload",
+        "description": "The client sends JSON metadata (name, size, contentType) — NOT the file — then PUTs the file directly to the returned presigned URL. `objectPath` is the public CloudFront URL to store / display the asset.\n",
+        "tags": [
+          "Storage"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Presigned upload URL + public object path"
+          },
+          "400": {
+            "description": "Missing or invalid fields"
+          },
+          "500": {
+            "description": "Failed to generate upload URL"
+          }
+        }
+      }
+    },
+    "/api/reportes/ventas-diarias": {
+      "get": {
+        "summary": "Daily sales report (aggregated per day)",
+        "tags": [
+          "Reportes"
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily sales rows"
+          }
+        }
+      }
+    },
+    "/api/reportes/ventas-diarias/{fecha}": {
+      "get": {
+        "summary": "Sales detail for a specific day",
+        "tags": [
+          "Reportes"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fecha",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Date (YYYY-MM-DD)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sales detail for the day"
+          },
+          "422": {
+            "description": "Invalid date"
+          }
+        }
+      }
+    },
+    "/api/proveedores": {
+      "get": {
+        "summary": "List proveedores",
+        "tags": [
+          "Proveedores"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of proveedores"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a proveedor",
+        "tags": [
+          "Proveedores"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/api/proveedores/{id}": {
+      "get": {
+        "summary": "Get a proveedor by id",
+        "tags": [
+          "Proveedores"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Proveedor"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a proveedor",
+        "tags": [
+          "Proveedores"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a proveedor",
+        "tags": [
+          "Proveedores"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/maletas": {
+      "get": {
+        "summary": "List maletas",
+        "tags": [
+          "Maletas"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of maletas"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a maleta",
+        "tags": [
+          "Maletas"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/api/maletas/{id}": {
+      "get": {
+        "summary": "Get a maleta by id",
+        "tags": [
+          "Maletas"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Maleta"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a maleta",
+        "tags": [
+          "Maletas"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a maleta",
+        "tags": [
+          "Maletas"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/maletas/{id}/contenido": {
+      "get": {
+        "summary": "List inventory contained in a maleta",
+        "tags": [
+          "Maletas"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Maleta contents"
+          }
+        }
+      }
+    },
+    "/api/lotes": {
+      "get": {
+        "summary": "List lotes",
+        "tags": [
+          "Lotes"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "tipoCompra",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "contado",
+                "credito"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "proveedorId",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of lotes"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a lote",
+        "tags": [
+          "Lotes"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/api/lotes/{id}": {
+      "get": {
+        "summary": "Get a lote by id",
+        "tags": [
+          "Lotes"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lote"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a lote",
+        "tags": [
+          "Lotes"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a lote",
+        "tags": [
+          "Lotes"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/kardex": {
+      "get": {
+        "summary": "List kardex movements (entrada/venta/traslado)",
+        "tags": [
+          "Kardex"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "tipoMovimiento",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "entrada",
+                "venta",
+                "traslado"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "camisetaId",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Kardex movements"
+          }
+        }
+      }
+    },
+    "/api/inventario": {
+      "get": {
+        "summary": "List inventory lines",
+        "tags": [
+          "Inventario"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "camisetaId",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "maletaId",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inventory lines"
+          }
+        }
+      }
+    },
+    "/api/inventario/ingreso": {
+      "post": {
+        "summary": "Add stock (entrada) to inventory",
+        "tags": [
+          "Inventario"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Stock added"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/api/inventario/venta": {
+      "post": {
+        "summary": "Register a sale (venta) across inventory lines",
+        "tags": [
+          "Inventario"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sale registered"
+          },
+          "422": {
+            "description": "Validation error"
+          },
+          "500": {
+            "description": "Sale error"
+          }
+        }
+      }
+    },
+    "/api/inventario/traslado": {
+      "post": {
+        "summary": "Transfer stock between maletas",
+        "tags": [
+          "Inventario"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Transfer registered"
+          },
+          "422": {
+            "description": "Validation error"
+          },
+          "500": {
+            "description": "Transfer error"
+          }
+        }
+      }
+    },
+    "/api/inventario/exposicion/reset": {
+      "post": {
+        "summary": "Clear the exhibited (expuesto) flag on all inventory",
+        "tags": [
+          "Inventario"
+        ],
+        "responses": {
+          "200": {
+            "description": "Count of updated rows"
+          }
+        }
+      }
+    },
+    "/api/inventario/{id}/exposicion": {
+      "patch": {
+        "summary": "Set the exhibited (expuesto) flag on an inventory line",
+        "tags": [
+          "Inventario"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated"
+          },
+          "400": {
+            "description": "Invalid id"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/api/healthz": {
+      "get": {
+        "summary": "Health check",
+        "tags": [
+          "Health"
+        ],
+        "responses": {
+          "200": {
+            "description": "Service healthy"
+          }
+        }
+      }
+    },
+    "/api/equipos": {
+      "get": {
+        "summary": "List equipos",
+        "tags": [
+          "Equipos"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of equipos"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create an equipo",
+        "tags": [
+          "Equipos"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/api/equipos/{id}": {
+      "get": {
+        "summary": "Get an equipo by id",
+        "tags": [
+          "Equipos"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Equipo"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update an equipo",
+        "tags": [
+          "Equipos"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete an equipo",
+        "tags": [
+          "Equipos"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/dashboard/resumen": {
+      "get": {
+        "summary": "Dashboard summary (totals + per-model stock cards)",
+        "tags": [
+          "Dashboard"
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard summary"
+          }
+        }
+      }
+    },
+    "/api/camisetas": {
+      "get": {
+        "summary": "List camisetas",
+        "tags": [
+          "Camisetas"
+        ],
+        "responses": {
+          "200": {
+            "description": "List of camisetas"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a camiseta",
+        "tags": [
+          "Camisetas"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/api/camisetas/{id}": {
+      "get": {
+        "summary": "Get a camiseta by id",
+        "tags": [
+          "Camisetas"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Camiseta"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a camiseta",
+        "tags": [
+          "Camisetas"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a camiseta",
+        "tags": [
+          "Camisetas"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/camisetas/{id}/detalle": {
+      "get": {
+        "summary": "Get a camiseta with inventory breakdown",
+        "tags": [
+          "Camisetas"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Camiseta detail"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {},
+  "tags": []
+}

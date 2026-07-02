@@ -1,0 +1,58 @@
+# Backend → AWS Lambda CODE update (automatic on push).
+# This is the everyday deploy: build the bundle and update the function code.
+# It does NOT touch API Gateway — the SAM build/deploy is a separate MANUAL
+# workflow (deploy-api.yml). Independent monorepo flow: only fires on BE/lib/
+# script changes. Push → dev; use workflow_dispatch to target prod.
+name: Deploy BE (Lambda code)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "artifacts/api-server/**"
+      - "lib/**"
+      - "scripts/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/deploy-be.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [dev, prod]
+        default: dev
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-be-${{ github.event.inputs.environment || 'dev' }}
+  cancel-in-progress: false
+
+env:
+  ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+  REGION: us-east-1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ENVIRONMENT == 'prod' && secrets.AWS_DEPLOY_ROLE_ARN_PROD || secrets.AWS_DEPLOY_ROLE_ARN_DEV }}
+          aws-region: ${{ env.REGION }}
+      - run: pnpm install --frozen-lockfile
+      - name: Build lambda package
+        run: bash scripts/pipeline-build.sh
+      - name: Update Lambda function code
+        run: bash scripts/pipeline-update.sh

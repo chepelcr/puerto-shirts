@@ -1,1 +1,0 @@
-- [Camisas del Puerto stack](camisas-del-puerto.md) — OpenAPI-first codegen flow, endpoint/hook naming, and DB push conventions for adding API endpoints.

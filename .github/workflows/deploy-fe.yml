@@ -1,0 +1,56 @@
+# Frontend → GitHub Pages (prod, shirts.jcampos.dev).
+# Independent monorepo flow: only fires when the FE app or shared libs change.
+name: Deploy FE (GitHub Pages)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "artifacts/camisas-del-puerto/**"
+      - "lib/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/deploy-fe.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build frontend
+        env:
+          BASE_PATH: /
+          VITE_API_URL: https://api.shirts.jcampos.dev
+          VITE_UPLOADS_URL: https://uploads.shirts.jcampos.dev
+        run: pnpm --filter @workspace/camisas-del-puerto run build
+      - name: SPA 404 fallback + CNAME
+        run: |
+          cd artifacts/camisas-del-puerto/dist/public
+          cp index.html 404.html
+          test -f CNAME || echo "shirts.jcampos.dev" > CNAME
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: artifacts/camisas-del-puerto/dist/public
+      - id: deploy
+        uses: actions/deploy-pages@v4

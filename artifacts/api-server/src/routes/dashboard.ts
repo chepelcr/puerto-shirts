@@ -12,6 +12,15 @@ const STOCK_BAJO_UMBRAL = 3;
 
 const router: IRouter = Router();
 
+/**
+ * @swagger
+ * /api/dashboard/resumen:
+ *   get:
+ *     summary: Dashboard summary (totals + per-model stock cards)
+ *     tags: [Dashboard]
+ *     responses:
+ *       200: { description: Dashboard summary }
+ */
 router.get("/dashboard/resumen", async (_req: Request, res: Response) => {
   const camisetas = await db
     .select({
