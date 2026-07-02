@@ -69,6 +69,28 @@ export class ObjectStorageService {
     return { uploadURL, key, publicUrl: this.publicUrlForKey(key) };
   }
 
+  /**
+   * Upload bytes the API generated itself (e.g. a report PDF) straight to S3 and
+   * return the public CloudFront URL. Unlike the presigned-PUT flow this is used
+   * for server-side artifacts, not client uploads.
+   */
+  async uploadObject(
+    key: string,
+    body: Uint8Array | Buffer,
+    contentType: string,
+  ): Promise<string> {
+    const normalizedKey = key.replace(/^\/+/, "");
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: getUploadsBucket(),
+        Key: normalizedKey,
+        Body: body,
+        ContentType: contentType,
+      }),
+    );
+    return this.publicUrlForKey(normalizedKey);
+  }
+
   /** Build the public CloudFront URL for an object key. */
   publicUrlForKey(key: string): string {
     return `${getPublicAssetBaseUrl()}/${key.replace(/^\/+/, "")}`;

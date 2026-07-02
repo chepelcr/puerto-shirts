@@ -9,8 +9,11 @@ import {
   maletasTable,
 } from "@workspace/db";
 import { num } from "../lib/http";
+import { ObjectStorageService } from "../lib/objectStorage";
+import { buildVentasReportPdf } from "../lib/pdf";
 
 const router: IRouter = Router();
+const objectStorage = new ObjectStorageService();
 
 const fechaDia = sql<string>`to_char(${ventasTable.fecha} AT TIME ZONE 'America/Costa_Rica', 'YYYY-MM-DD')`;
 
@@ -30,6 +33,15 @@ const fechaDia = sql<string>`to_char(${ventasTable.fecha} AT TIME ZONE 'America/
  *       - { in: path, name: fecha, required: true, schema: { type: string }, description: "Date (YYYY-MM-DD)" }
  *     responses:
  *       200: { description: Sales detail for the day }
+ *       422: { description: Invalid date }
+ * /api/reportes/ventas-diarias/{fecha}/pdf:
+ *   post:
+ *     summary: Generate a daily sales PDF report (with profit) and store it in S3
+ *     tags: [Reportes]
+ *     parameters:
+ *       - { in: path, name: fecha, required: true, schema: { type: string }, description: "Date (YYYY-MM-DD)" }
+ *     responses:
+ *       201: { description: PDF generated; returns its public URL }
  *       422: { description: Invalid date }
  */
 router.get("/reportes/ventas-diarias", async (_req: Request, res: Response) => {
@@ -147,6 +159,88 @@ router.get(
       utilidad,
       ventas: ventasOut,
     });
+  },
+);
+
+router.post(
+  "/reportes/ventas-diarias/:fecha/pdf",
+  async (req: Request, res: Response) => {
+    const fecha = String(req.params.fecha);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      res.status(422).json({ error: "Fecha inválida (formato YYYY-MM-DD)" });
+      return;
+    }
+
+    const items = await db
+      .select({
+        nombreEquipo: equiposTable.nombreEquipo,
+        descripcion: camisetasTable.descripcion,
+        talla: ventaDetallesTable.talla,
+        codigoMaleta: maletasTable.codigoMaleta,
+        cantidad: ventaDetallesTable.cantidad,
+        precioUnitario: ventaDetallesTable.precioUnitario,
+        subtotal: ventaDetallesTable.subtotal,
+        utilidad: ventaDetallesTable.utilidad,
+      })
+      .from(ventaDetallesTable)
+      .innerJoin(ventasTable, eq(ventaDetallesTable.ventaId, ventasTable.id))
+      .innerJoin(
+        camisetasTable,
+        eq(ventaDetallesTable.camisetaId, camisetasTable.id),
+      )
+      .innerJoin(equiposTable, eq(camisetasTable.equipoId, equiposTable.id))
+      .leftJoin(maletasTable, eq(ventaDetallesTable.maletaId, maletasTable.id))
+      .where(sql`${fechaDia} = ${fecha}`)
+      .orderBy(asc(equiposTable.nombreEquipo));
+
+    let totalCamisetas = 0;
+    let total = 0;
+    let utilidad = 0;
+    const reportItems = items.map((it) => {
+      totalCamisetas += it.cantidad;
+      total = Math.round((total + num(it.subtotal)) * 100) / 100;
+      utilidad = Math.round((utilidad + num(it.utilidad)) * 100) / 100;
+      return {
+        nombreEquipo: it.nombreEquipo,
+        descripcion: it.descripcion,
+        talla: it.talla,
+        codigoMaleta: it.codigoMaleta,
+        cantidad: it.cantidad,
+        precioUnitario: num(it.precioUnitario),
+        subtotal: num(it.subtotal),
+        utilidad: num(it.utilidad),
+      };
+    });
+
+    // A day with no sales still returns 422 — nothing to report on.
+    if (reportItems.length === 0) {
+      res.status(422).json({ error: "No hay ventas para esta fecha" });
+      return;
+    }
+
+    const ventaRows = await db
+      .select({ id: ventasTable.id })
+      .from(ventasTable)
+      .where(sql`${fechaDia} = ${fecha}`);
+    const numVentas = ventaRows.length;
+
+    try {
+      const pdf = await buildVentasReportPdf({
+        fecha,
+        numVentas,
+        totalCamisetas,
+        total,
+        utilidad,
+        items: reportItems,
+      });
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const key = `reportes/ventas/ventas-${fecha}-${stamp}.pdf`;
+      const url = await objectStorage.uploadObject(key, pdf, "application/pdf");
+      res.status(201).json({ url, key });
+    } catch (err) {
+      req.log.error({ err }, "Error generando reporte de ventas");
+      res.status(500).json({ error: "Error generando el reporte" });
+    }
   },
 );
 

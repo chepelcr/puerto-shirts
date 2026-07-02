@@ -86,6 +86,33 @@
         }
       }
     },
+    "/api/reportes/ventas-diarias/{fecha}/pdf": {
+      "post": {
+        "summary": "Generate a daily sales PDF report (with profit) and store it in S3",
+        "tags": [
+          "Reportes"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fecha",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Date (YYYY-MM-DD)"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "PDF generated; returns its public URL"
+          },
+          "422": {
+            "description": "Invalid date"
+          }
+        }
+      }
+    },
     "/api/proveedores": {
       "get": {
         "summary": "List proveedores",
@@ -496,6 +523,58 @@
         "responses": {
           "204": {
             "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/lotes/{id}/detalle": {
+      "get": {
+        "summary": "Lote detail — original quantities vs current stock (no profit)",
+        "tags": [
+          "Lotes"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lote with per-camiseta original vs available stock"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/api/lotes/{id}/reporte": {
+      "post": {
+        "summary": "Generate a lote PDF report (stock, no profit) and store it in S3",
+        "tags": [
+          "Lotes"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "PDF generated; returns its public URL"
           },
           "404": {
             "description": "Not found"

@@ -26,6 +26,9 @@ export const inventarioTable = pgTable("inventario", {
   talla: tallaEnum("talla").notNull(),
   costoUnidad: numeric("costo_unidad", { precision: 12, scale: 2 }).notNull(),
   precioVenta: numeric("precio_venta", { precision: 12, scale: 2 }).notNull(),
+  // Units originally purchased into this line (grows on ingreso, never decremented
+  // by ventas or traslados). Lets a lote show "original quantity vs current stock".
+  cantidadInicial: integer("cantidad_inicial").notNull().default(0),
   cantidadDisponible: integer("cantidad_disponible").notNull().default(0),
   expuesto: boolean("expuesto").notNull().default(false),
 });
