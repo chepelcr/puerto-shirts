@@ -43,6 +43,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiErrorMessage, money, resolveImg } from "@/lib/format";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { useConfirm } from "@/components/confirm-dialog";
 
 function maletaDeepLink(id: number): string {
   const base = import.meta.env.BASE_URL || "/";
@@ -204,6 +205,7 @@ function ContenidoDialog({
 export default function Maletas() {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const { data: maletas, isLoading } = useListMaletas();
   const create = useCreateMaleta();
   const update = useUpdateMaleta();
@@ -260,8 +262,16 @@ export default function Maletas() {
     else create.mutate({ data }, onDone);
   };
 
-  const del = (m: Maleta) => {
-    if (!confirm(`¿Eliminar maleta "${m.codigoMaleta}"?`)) return;
+  const del = async (m: Maleta) => {
+    if (
+      !(await confirm({
+        title: "Eliminar maleta",
+        description: `¿Eliminar maleta "${m.codigoMaleta}"?`,
+        confirmText: "Eliminar",
+        destructive: true,
+      }))
+    )
+      return;
     remove.mutate(
       { id: m.id },
       {

@@ -30,10 +30,12 @@ import { Plus, Pencil, Trash2, Truck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiErrorMessage } from "@/lib/format";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { useConfirm } from "@/components/confirm-dialog";
 
 export default function Proveedores() {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const { data: proveedores, isLoading } = useListProveedores();
   const create = useCreateProveedor();
   const update = useUpdateProveedor();
@@ -79,8 +81,16 @@ export default function Proveedores() {
     }
   };
 
-  const del = (p: Proveedor) => {
-    if (!confirm(`¿Eliminar proveedor "${p.nombre}"?`)) return;
+  const del = async (p: Proveedor) => {
+    if (
+      !(await confirm({
+        title: "Eliminar proveedor",
+        description: `¿Eliminar proveedor "${p.nombre}"?`,
+        confirmText: "Eliminar",
+        destructive: true,
+      }))
+    )
+      return;
     remove.mutate(
       { id: p.id },
       {
