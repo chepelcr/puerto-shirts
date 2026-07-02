@@ -16,6 +16,7 @@ import Kardex from "@/pages/Kardex";
 import Reportes from "@/pages/Reportes";
 import ReporteDetalle from "@/pages/ReporteDetalle";
 import { CartProvider } from "@/context/CartContext";
+import { ConfirmProvider } from "@/components/confirm-dialog";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,11 +56,13 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <CartProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
-        </CartProvider>
+        <ConfirmProvider>
+          <CartProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <Router />
+            </WouterRouter>
+          </CartProvider>
+        </ConfirmProvider>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>

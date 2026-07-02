@@ -30,10 +30,12 @@ import { Plus, Pencil, Trash2, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiErrorMessage } from "@/lib/format";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { useConfirm } from "@/components/confirm-dialog";
 
 export default function Equipos() {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const { data: equipos, isLoading } = useListEquipos();
   const create = useCreateEquipo();
   const update = useUpdateEquipo();
@@ -78,8 +80,16 @@ export default function Equipos() {
     }
   };
 
-  const del = (e: Equipo) => {
-    if (!confirm(`¿Eliminar equipo "${e.nombreEquipo}"?`)) return;
+  const del = async (e: Equipo) => {
+    if (
+      !(await confirm({
+        title: "Eliminar equipo",
+        description: `¿Eliminar equipo "${e.nombreEquipo}"?`,
+        confirmText: "Eliminar",
+        destructive: true,
+      }))
+    )
+      return;
     remove.mutate(
       { id: e.id },
       {

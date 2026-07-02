@@ -38,10 +38,12 @@ import { Plus, Trash2, Boxes } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiErrorMessage, money, fmtDate } from "@/lib/format";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { useConfirm } from "@/components/confirm-dialog";
 
 export default function Lotes() {
   const qc = useQueryClient();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
   const { data: lotes, isLoading } = useListLotes(
     filtroTipo === "todos"
@@ -97,8 +99,16 @@ export default function Lotes() {
     );
   };
 
-  const del = (id: number) => {
-    if (!confirm("¿Eliminar este lote?")) return;
+  const del = async (id: number) => {
+    if (
+      !(await confirm({
+        title: "Eliminar lote",
+        description: "¿Eliminar este lote?",
+        confirmText: "Eliminar",
+        destructive: true,
+      }))
+    )
+      return;
     remove.mutate(
       { id },
       {

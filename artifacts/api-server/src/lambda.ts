@@ -1,26 +1,11 @@
 import serverless from "serverless-http";
-import { initializeAppConfig } from "./config/appConfig";
-import { getDatabaseUrl } from "./config/secrets";
-import { initializeDatabase } from "@workspace/db";
+import { ExpressAppConfig } from "./config/ExpressAppConfig";
 
-// Bootstrap (management-be order) BEFORE importing the Express app: bridge SSM
-// config into env, resolve the DB URL (env → SSM → Secrets Manager) and open
-// the postgres-js connection. The app is imported dynamically so its module
-// graph (routes → @workspace/db) evaluates only after the db is ready.
+// Mirrors management-be lambda.cts: build the Express app via the shared config
+// class, wrap it with serverless-http. SSM config + DB init happen inside the
+// app's readiness gate, so requests wait until it's ready (warm invocations
+// resolve immediately).
+const app = new ExpressAppConfig().getApp();
+const expressHandler = serverless(app);
 
-let cachedHandler: ReturnType<typeof serverless> | undefined;
-
-async function bootstrap() {
-  if (!cachedHandler) {
-    await initializeAppConfig();
-    await initializeDatabase(await getDatabaseUrl());
-    const { default: app } = await import("./app");
-    cachedHandler = serverless(app);
-  }
-  return cachedHandler;
-}
-
-export const handler = async (event: any, context: any) => {
-  const h = await bootstrap();
-  return h(event, context);
-};
+export const handler = async (event: any, context: any) => expressHandler(event, context);
