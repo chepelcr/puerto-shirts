@@ -1,11 +1,10 @@
 #!/bin/bash
-# MANUAL step — refresh swagger, regenerate the API Gateway template, then
-# `sam build` + `sam deploy`. Not part of the automatic push flow: the API
-# contract (per-endpoint methods, custom domain, cert) changes here, so it is
-# run deliberately (workflow_dispatch or locally) after the Lambda code is live.
+# Phase 3 (tsuru pattern) — refresh swagger, regenerate the API Gateway template,
+# then `sam build` + `sam deploy`. Runs on every push after the Lambda code
+# update; when no endpoints changed the changeset is empty and it passes fast.
 set -euo pipefail
 
-ENVIRONMENT="${ENVIRONMENT:-dev}"
+ENVIRONMENT="${ENVIRONMENT:-prod}"
 REGION="${REGION:-us-east-1}"
 ROOT_DOMAIN="${ROOT_DOMAIN:-jcampos.dev}"
 if [ "$ENVIRONMENT" = "prod" ]; then

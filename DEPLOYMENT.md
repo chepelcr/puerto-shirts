@@ -1,100 +1,94 @@
 # puerto-shirts — Deployment
 
-Self-hosted CI/CD mirroring the tsuru `management-be` pattern. Monorepo with
-**independent** deploy flows per app.
+Self-hosted CI/CD mirroring tsuru `management-be`. Monorepo with **independent**
+deploy flows (FE vs BE). Everything is Infrastructure-as-Code so it can be
+replayed in any AWS account.
 
 ## Architecture
 
-| Piece | Where | Domain |
+| Piece | Where | Prod domain |
 |---|---|---|
 | Frontend (`artifacts/camisas-del-puerto`) | GitHub Pages | `shirts.jcampos.dev` |
-| Backend (`artifacts/api-server`, Express → Lambda via serverless-http) | AWS Lambda + API Gateway (REST, per-endpoint) | `api.shirts.jcampos.dev` (dev `api-dev.`) |
-| Uploads (images) | S3 + CloudFront | `uploads.shirts.jcampos.dev` (dev `uploads-dev.`) |
+| Backend (`artifacts/api-server`, Express → Lambda via serverless-http) | AWS Lambda + API Gateway (REST, per-endpoint) | `api.shirts.jcampos.dev` |
+| Uploads (images) | S3 + CloudFront | `uploads.shirts.jcampos.dev` |
 | Database | Supabase Postgres (transaction pooler `:6543`) | — |
-| Config | SSM Parameter Store `/pacific/{env}/puerto-shirts/*` | — |
+| Config | SSM `/pacific/{env}/puerto-shirts/*` | — |
 | DB credentials | Secrets Manager `pacific/{env}/puerto-shirts/database` | — |
+| SAM template staging | **single** bucket `puerto-shirts-sam-deployments` | — |
 
-AWS account: same as tsuru. Profile: **`PACIFIC-PROD`**. Region: `us-east-1`.
-Hosted zone: `jcampos.dev` (resolved at deploy time).
+Region `us-east-1`. AWS profile `PACIFIC-PROD`. Hosted zone `jcampos.dev`
+(resolved at deploy time). GitHub OIDC provider is account-global (already exists).
 
-## Config & DB connection (management-be pattern)
+**Environments:** the scripts + `samconfig.toml` support `dev` and `prod` (pass the
+env as `$1`). **Only `prod` is currently deployed** — stand up `dev` later with
+`bash deploys/deploy-all.sh dev` if needed.
 
-- `src/config/appConfig.ts` — SSM reader: `SSM → env → default`, 5-min cache. `SSM_BASE_PATH` env wins; else `settings.cfg`.
-- `src/config/secrets.ts` — `getDatabaseUrl()`: `DATABASE_URL`/`NEW_DATABASE_URL` → SSM `aws.database` (secret name) → Secrets Manager → build `postgresql://…`.
-- `lib/db` — lazy `postgres-js` with `prepare:false` (**required** for the Supabase pooler) + a `db` Proxy. `initializeDatabase()` runs at startup.
-- **Local dev:** set `DATABASE_URL` (or the `DATABASE_HOST/PORT/USERNAME/PASSWORD/DBNAME` fields) — no AWS calls.
+## The GitHub flow (full tsuru pattern)
 
-## The GitHub flow (3 independent workflows)
+Two workflows, path-scoped, on push to `main`:
 
-1. **`deploy-fe.yml`** — push to `main` touching `artifacts/camisas-del-puerto/**` or `lib/**` → build + publish to GitHub Pages (prod).
-2. **`deploy-be.yml`** — push touching `artifacts/api-server/**`, `lib/**`, `scripts/**` → build the Lambda zip + `update-function-code` (**automatic; dev**). `workflow_dispatch` to target `prod`. Does **not** touch API Gateway.
-3. **`deploy-api.yml`** — **MANUAL** (`workflow_dispatch` only): regenerate the swagger spec → `gen_api_template.py` → **`sam build` + `sam deploy`** (custom domain, cert, Route53). Run this after the Lambda code is live and whenever endpoints change.
+1. **`deploy-fe.yml`** → build FE + publish to GitHub Pages (fires on `artifacts/camisas-del-puerto/**` or `lib/**`).
+2. **`deploy-be.yml`** → one job, three phases like tsuru: `pipeline-build` (bundle) → `pipeline-update` (Lambda code) → `pipeline-api` (regenerate template + `sam deploy` the API Gateway). When no endpoints changed the changeset is empty and the API step passes fast. Defaults to **prod**; `workflow_dispatch` can target `dev`.
 
-> The `sam build` is intentionally a manual step — it changes the public API contract.
+OIDC auth (no keys): repo secret `AWS_DEPLOY_ROLE_ARN_PROD` (+ `_DEV` if you use dev).
 
-## API docs
+## Deploy scripts (`deploys/`, `scripts/`, `secrets/`)
 
-Every endpoint carries `@swagger` JSDoc (`src/routes/*.ts`). `scripts/generate-swagger-spec.cjs`
-builds the spec; `scripts/gen_api_template.py` turns it into the per-endpoint API Gateway
-template. Swagger UI is served in-app at `/api-docs` (spec at `/api-docs/swagger.json`).
-**The generated gateway only routes documented paths** — add `@swagger` to every new route.
+| Script | Purpose |
+|---|---|
+| `deploys/deploy-all.sh <env>` | Full backend bootstrap in order (calls the ones below) |
+| `deploys/deploy-sam-bucket.sh` | The single shared SAM staging bucket (global, once) |
+| `deploys/deploy-role.sh <env>` | GitHub OIDC deploy role (IAM); prints the ARN for the repo secret |
+| `deploys/deploy-s3.sh <env>` | Uploads bucket + CloudFront + cert + Route53 (slow) |
+| `deploys/deploy-params.sh <env>` | SSM parameters |
+| `deploys/deploy-lambda.sh <env>` | Lambda **stack + code** (function, role, bundle) |
+| `deploys/deploy-api.sh <env>` | Regenerate template + deploy API Gateway (+ custom domain/cert) |
+| `secrets/build-secrets.sh <env> --database …` | DB secret (CFN placeholder + real Supabase creds, never committed) |
+| `scripts/pipeline-{build,update,api}.sh` | The three CI phases used by `deploy-be.yml` |
 
-## One-time bootstrap (run once per env with the `PACIFIC-PROD` profile)
+## One-time bootstrap in a fresh account (prod)
 
 ```bash
-export AWS_PROFILE=PACIFIC-PROD
+export AWS_PROFILE=PACIFIC-PROD          # your profile
+cd puerto-shirts
 
-# 1. OIDC deploy role (creates IAM) — dev and prod
-aws cloudformation deploy --template-file cloudformation/deploy-role.yml \
-  --stack-name puerto-shirts-dev-deploy-role --capabilities CAPABILITY_NAMED_IAM \
-  --parameter-overrides Environment=dev
-#   → copy the DeployRoleArn output into the repo secret AWS_DEPLOY_ROLE_ARN_DEV (and _PROD)
+# 0. OIDC deploy role → set the repo secret it prints
+bash deploys/deploy-role.sh prod
+gh secret set AWS_DEPLOY_ROLE_ARN_PROD -b "arn:aws:iam::<acct>:role/puerto-shirts-prod-github-deploy"
 
-# 2. DB secret (CFN placeholder + real Supabase pooler creds; never committed)
-bash secrets/build-secrets.sh dev --database \
-  --db-host aws-0-us-east-1.pooler.supabase.com --db-port 6543 \
-  --db-user postgres.<projectref> --db-pass '<password>' --db-name postgres
+# 1. DB secret — real Supabase POOLER creds (transaction mode, 6543); never committed
+bash secrets/build-secrets.sh prod --database \
+  --db-host <ref>.pooler.supabase.com --db-port 6543 \
+  --db-user postgres.<ref> --db-pass '<pass>' --db-name postgres
 
-# 3. Uploads bucket + CloudFront + uploads-dev.shirts.jcampos.dev
-bash deploys/deploy-s3.sh dev
-
-# 4. SSM params + Lambda (Lambda reads the uploads bucket from params)
-aws cloudformation deploy --template-file cloudformation/params.yml \
-  --stack-name puerto-shirts-dev-params --parameter-overrides \
-  Environment=dev ApiUrl=https://api-dev.shirts.jcampos.dev \
-  FrontendUrl=https://shirts.jcampos.dev UploadsUrl=https://uploads-dev.shirts.jcampos.dev \
-  UploadsBucket=puerto-shirts-dev-uploads
-
-aws cloudformation deploy --template-file cloudformation/lambda.yml \
-  --stack-name puerto-shirts-dev-lambda --capabilities CAPABILITY_NAMED_IAM \
-  --parameter-overrides Environment=dev UploadsBucketName=puerto-shirts-dev-uploads \
-  PublicAssetBaseUrl=https://uploads-dev.shirts.jcampos.dev
+# 2. Everything else, in order (sam bucket → uploads → params → lambda → api gateway)
+bash deploys/deploy-all.sh prod
 ```
 
 Then, once:
-- **GitHub → Settings → Pages:** source = GitHub Actions; custom domain `shirts.jcampos.dev`.
+- **GitHub → Settings → Pages:** source = **GitHub Actions**; custom domain `shirts.jcampos.dev`.
 - **Route53 (`jcampos.dev`):** `CNAME shirts.jcampos.dev → chepelcr.github.io`
-  (the `api.` / `uploads.` records are created by the SAM + s3-uploads stacks).
+  (the `api.` / `uploads.` A-records are created by the SAM + s3-uploads stacks).
+- **Push to `main`** (or run the workflows) → FE + BE deploy.
 
 ## Database schema
 
-Drizzle schema in `lib/db/src/schema`. Tables are created with:
+Drizzle schema in `lib/db/src/schema`; SQL in `lib/db/migrations/`. Create/refresh tables:
 ```bash
 DATABASE_URL=postgresql://… pnpm --filter @workspace/db exec drizzle-kit push --force
 ```
-Committed SQL lives in `lib/db/migrations/`. The 9 tables (equipos, camisetas, maletas,
-lotes, proveedores, inventario, kardex, ventas, venta_detalles) are already provisioned in
-the Supabase project.
+The 9 tables (equipos, camisetas, maletas, lotes, proveedores, inventario, kardex,
+ventas, venta_detalles) are already provisioned in Supabase.
 
-## Deploy sequence recap
+## Config & DB connection (management-be pattern)
 
-1. Bootstrap (above) per env → set `AWS_DEPLOY_ROLE_ARN_DEV/_PROD` repo secrets.
-2. `git push` → **deploy-fe** (Pages) + **deploy-be** (Lambda code, dev) run automatically.
-3. Run **deploy-api** (manual) to (re)deploy the API Gateway.
-4. Prod backend: run **deploy-be** / **deploy-api** via `workflow_dispatch` with `environment=prod`.
+- `src/config/appConfig.ts` — SSM reader (`SSM → env → default`, 5-min cache; `SSM_BASE_PATH` wins, else `settings.cfg`).
+- `src/config/secrets.ts` — `getDatabaseUrl()`: `DATABASE_URL` → SSM `aws.database` → Secrets Manager → build URL.
+- `lib/db` — lazy `postgres-js` with `prepare:false` (**required** for the Supabase pooler) + `db` Proxy.
+- **Local dev:** put the `DATABASE_*` fields (or `DATABASE_URL`) in `.env` (gitignored) — no AWS calls.
 
 ## Auth (later)
 
 The API is **public** for now so it can be built and tested online. The generator is
-authorizer-ready — add the Cognito user-management template later and flip on the
+authorizer-ready — add a Cognito user-management stack later and flip on the
 `CognitoAuthorizer` (per-route `security:`) in `scripts/gen_api_template.py`.

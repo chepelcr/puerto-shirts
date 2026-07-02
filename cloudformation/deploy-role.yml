@@ -66,8 +66,8 @@ Resources:
                   - s3:GetObject
                   - s3:ListBucket
                 Resource:
-                  - !Sub "arn:aws:s3:::puerto-shirts-${Environment}-sam-deployments"
-                  - !Sub "arn:aws:s3:::puerto-shirts-${Environment}-sam-deployments/*"
+                  - "arn:aws:s3:::puerto-shirts-sam-deployments"
+                  - "arn:aws:s3:::puerto-shirts-sam-deployments/*"
               - Effect: Allow
                 Action: apigateway:*
                 Resource: "*"

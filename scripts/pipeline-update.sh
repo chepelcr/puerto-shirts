@@ -2,7 +2,7 @@
 # Phase 2 — update the Lambda function code from lambda-package.zip.
 set -euo pipefail
 
-ENVIRONMENT="${ENVIRONMENT:-dev}"
+ENVIRONMENT="${ENVIRONMENT:-prod}"
 REGION="${REGION:-us-east-1}"
 FUNCTION_NAME="puerto-shirts-${ENVIRONMENT}-api-handler"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
