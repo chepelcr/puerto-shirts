@@ -1,5 +1,8 @@
 import { Link, useParams } from "wouter";
-import { useGetReporteVentasDiariasDetalle } from "@workspace/api-client-react";
+import {
+  useGetReporteVentasDiariasDetalle,
+  useGenerarReporteVentasDiariasPdf,
+} from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -10,8 +13,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowLeft, Clock } from "lucide-react";
-import { money } from "@/lib/format";
+import { ArrowLeft, Clock, FileDown } from "lucide-react";
+import { money, apiErrorMessage } from "@/lib/format";
+import { useToast } from "@/hooks/use-toast";
 
 function fmtDia(ymd: string): string {
   const d = new Date(`${ymd}T12:00:00`);
@@ -37,15 +41,47 @@ function fmtHora(iso: string): string {
 export default function ReporteDetalle() {
   const params = useParams();
   const fecha = String(params.fecha);
+  const { toast } = useToast();
   const { data, isLoading } = useGetReporteVentasDiariasDetalle(fecha);
+  const generar = useGenerarReporteVentasDiariasPdf();
+
+  const descargarPdf = () => {
+    generar.mutate(
+      { fecha },
+      {
+        onSuccess: (res) => {
+          window.open(res.url, "_blank", "noopener,noreferrer");
+          toast({ title: "Reporte generado" });
+        },
+        onError: (e) =>
+          toast({
+            title: "Error",
+            description: apiErrorMessage(e, "No se pudo generar el reporte"),
+            variant: "destructive",
+          }),
+      },
+    );
+  };
 
   return (
     <div className="space-y-6">
-      <Link href="/reportes">
-        <Button variant="ghost" className="gap-2 -ml-2">
-          <ArrowLeft className="h-4 w-4" /> Reportes
-        </Button>
-      </Link>
+      <div className="flex items-center justify-between gap-2">
+        <Link href="/reportes">
+          <Button variant="ghost" className="gap-2 -ml-2">
+            <ArrowLeft className="h-4 w-4" /> Reportes
+          </Button>
+        </Link>
+        {data && data.ventas.length > 0 && (
+          <Button
+            onClick={descargarPdf}
+            disabled={generar.isPending}
+            className="gap-2"
+          >
+            <FileDown className="h-4 w-4" />
+            {generar.isPending ? "Generando..." : "Descargar PDF"}
+          </Button>
+        )}
+      </div>
 
       {isLoading ? (
         <p className="text-muted-foreground animate-pulse">Cargando...</p>

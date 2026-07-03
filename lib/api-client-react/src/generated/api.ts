@@ -39,6 +39,7 @@ import type {
   ListKardexParams,
   ListLotesParams,
   Lote,
+  LoteDetalle,
   LoteInput,
   LoteUpdate,
   Maleta,
@@ -49,6 +50,7 @@ import type {
   Proveedor,
   ProveedorInput,
   ProveedorUpdate,
+  ReportePdf,
   ReporteVentaDiaria,
   ReporteVentaDiariaDetalle,
   ResetExposicionResultado,
@@ -2154,6 +2156,155 @@ export const useDeleteLote = <TError = ErrorType<NotFoundResponse>,
       return useMutation(getDeleteLoteMutationOptions(options));
     }
 
+export const getGetLoteDetalleUrl = (id: number,) => {
+
+
+
+
+  return `/api/lotes/${id}/detalle`
+}
+
+/**
+ * Agrupa el inventario del lote por camiseta y talla, mostrando la cantidad inicial comprada frente al stock disponible. No incluye utilidad.
+ * @summary Detalle del lote — cantidades originales vs stock actual
+ */
+export const getLoteDetalle = async (id: number, options?: RequestInit): Promise<LoteDetalle> => {
+
+  return customFetch<LoteDetalle>(getGetLoteDetalleUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLoteDetalleQueryKey = (id: number,) => {
+    return [
+    `/api/lotes/${id}/detalle`
+    ] as const;
+    }
+
+
+export const getGetLoteDetalleQueryOptions = <TData = Awaited<ReturnType<typeof getLoteDetalle>>, TError = ErrorType<NotFoundResponse>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLoteDetalle>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLoteDetalleQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLoteDetalle>>> = ({ signal }) => getLoteDetalle(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLoteDetalle>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLoteDetalleQueryResult = NonNullable<Awaited<ReturnType<typeof getLoteDetalle>>>
+export type GetLoteDetalleQueryError = ErrorType<NotFoundResponse>
+
+
+/**
+ * @summary Detalle del lote — cantidades originales vs stock actual
+ */
+
+export function useGetLoteDetalle<TData = Awaited<ReturnType<typeof getLoteDetalle>>, TError = ErrorType<NotFoundResponse>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLoteDetalle>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLoteDetalleQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGenerarReporteLoteUrl = (id: number,) => {
+
+
+
+
+  return `/api/lotes/${id}/reporte`
+}
+
+/**
+ * Genera un PDF con las cantidades originales vs stock actual del lote, lo almacena en S3 y devuelve su URL pública. Pensado para conversar con el proveedor.
+ * @summary Generar el PDF del reporte del lote (sin utilidad)
+ */
+export const generarReporteLote = async (id: number, options?: RequestInit): Promise<ReportePdf> => {
+
+  return customFetch<ReportePdf>(getGenerarReporteLoteUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getGenerarReporteLoteMutationOptions = <TError = ErrorType<NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generarReporteLote>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generarReporteLote>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['generarReporteLote'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generarReporteLote>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  generarReporteLote(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerarReporteLoteMutationResult = NonNullable<Awaited<ReturnType<typeof generarReporteLote>>>
+
+    export type GenerarReporteLoteMutationError = ErrorType<NotFoundResponse>
+
+    /**
+ * @summary Generar el PDF del reporte del lote (sin utilidad)
+ */
+export const useGenerarReporteLote = <TError = ErrorType<NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generarReporteLote>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generarReporteLote>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getGenerarReporteLoteMutationOptions(options));
+    }
+
 export const getListInventarioUrl = (params?: ListInventarioParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -2911,6 +3062,77 @@ export function useGetReporteVentasDiariasDetalle<TData = Awaited<ReturnType<typ
 
 
 
+
+export const getGenerarReporteVentasDiariasPdfUrl = (fecha: string,) => {
+
+
+
+
+  return `/api/reportes/ventas-diarias/${fecha}/pdf`
+}
+
+/**
+ * Genera un PDF del reporte de ventas del día, lo almacena en S3 y devuelve su URL pública.
+ * @summary Generar el PDF del reporte de ventas de un día (con utilidad)
+ */
+export const generarReporteVentasDiariasPdf = async (fecha: string, options?: RequestInit): Promise<ReportePdf> => {
+
+  return customFetch<ReportePdf>(getGenerarReporteVentasDiariasPdfUrl(fecha),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getGenerarReporteVentasDiariasPdfMutationOptions = <TError = ErrorType<ValidationErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generarReporteVentasDiariasPdf>>, TError,{fecha: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generarReporteVentasDiariasPdf>>, TError,{fecha: string}, TContext> => {
+
+const mutationKey = ['generarReporteVentasDiariasPdf'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generarReporteVentasDiariasPdf>>, {fecha: string}> = (props) => {
+          const {fecha} = props ?? {};
+
+          return  generarReporteVentasDiariasPdf(fecha,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerarReporteVentasDiariasPdfMutationResult = NonNullable<Awaited<ReturnType<typeof generarReporteVentasDiariasPdf>>>
+
+    export type GenerarReporteVentasDiariasPdfMutationError = ErrorType<ValidationErrorResponse>
+
+    /**
+ * @summary Generar el PDF del reporte de ventas de un día (con utilidad)
+ */
+export const useGenerarReporteVentasDiariasPdf = <TError = ErrorType<ValidationErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generarReporteVentasDiariasPdf>>, TError,{fecha: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generarReporteVentasDiariasPdf>>,
+        TError,
+        {fecha: string},
+        TContext
+      > => {
+      return useMutation(getGenerarReporteVentasDiariasPdfMutationOptions(options));
+    }
 
 export const getRequestUploadUrlUrl = () => {
 

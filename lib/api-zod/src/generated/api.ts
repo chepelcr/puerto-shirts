@@ -392,7 +392,7 @@ export const CreateLoteBody = zod.object({
   "proveedorId": zod.number(),
   "fechaIngreso": zod.coerce.date(),
   "tipoCompra": zod.enum(['contado', 'credito']),
-  "costoTotal": zod.number().min(createLoteBodyCostoTotalMin)
+  "costoTotal": zod.number().min(createLoteBodyCostoTotalMin).optional().describe('Optional starting cost. Defaults to 0 and accrues automatically as stock is added to the lote via inventario\/ingreso.')
 })
 
 export const CreateLoteResponse = zod.object({
@@ -458,6 +458,51 @@ export const DeleteLoteParams = zod.object({
 })
 
 export const DeleteLoteResponse = zod.void()
+
+
+/**
+ * Agrupa el inventario del lote por camiseta y talla, mostrando la cantidad inicial comprada frente al stock disponible. No incluye utilidad.
+ * @summary Detalle del lote — cantidades originales vs stock actual
+ */
+export const GetLoteDetalleParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetLoteDetalleResponse = zod.object({
+  "id": zod.number(),
+  "proveedorId": zod.number(),
+  "nombreProveedor": zod.string().nullish(),
+  "fechaIngreso": zod.coerce.date(),
+  "tipoCompra": zod.enum(['contado', 'credito']),
+  "costoTotal": zod.number(),
+  "totalInicial": zod.number(),
+  "totalDisponible": zod.number(),
+  "totalVendido": zod.number(),
+  "items": zod.array(zod.object({
+  "camisetaId": zod.number(),
+  "nombreEquipo": zod.string(),
+  "descripcion": zod.string().nullish(),
+  "urlImagen": zod.string().nullish(),
+  "talla": zod.enum(['S', 'M', 'L', 'XL', 'XXL', 'XXXL']),
+  "cantidadInicial": zod.number(),
+  "cantidadDisponible": zod.number(),
+  "costoUnidad": zod.number()
+}))
+})
+
+
+/**
+ * Genera un PDF con las cantidades originales vs stock actual del lote, lo almacena en S3 y devuelve su URL pública. Pensado para conversar con el proveedor.
+ * @summary Generar el PDF del reporte del lote (sin utilidad)
+ */
+export const GenerarReporteLoteParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GenerarReporteLoteResponse = zod.object({
+  "url": zod.string().describe('Public CloudFront URL of the generated PDF.'),
+  "key": zod.string().describe('S3 object key of the generated PDF.')
+})
 
 
 /**
@@ -695,6 +740,20 @@ export const GetReporteVentasDiariasDetalleResponse = zod.object({
   "codigoMaleta": zod.string().nullish()
 }))
 }))
+})
+
+
+/**
+ * Genera un PDF del reporte de ventas del día, lo almacena en S3 y devuelve su URL pública.
+ * @summary Generar el PDF del reporte de ventas de un día (con utilidad)
+ */
+export const GenerarReporteVentasDiariasPdfParams = zod.object({
+  "fecha": zod.coerce.string()
+})
+
+export const GenerarReporteVentasDiariasPdfResponse = zod.object({
+  "url": zod.string().describe('Public CloudFront URL of the generated PDF.'),
+  "key": zod.string().describe('S3 object key of the generated PDF.')
 })
 
 

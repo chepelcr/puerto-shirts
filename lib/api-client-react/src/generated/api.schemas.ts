@@ -158,8 +158,45 @@ export interface LoteInput {
   proveedorId: number;
   fechaIngreso: string;
   tipoCompra: TipoCompra;
-  /** @minimum 0 */
+  /**
+     * Optional starting cost. Defaults to 0 and accrues automatically as stock is added to the lote via inventario/ingreso.
+     * @minimum 0
+     */
+  costoTotal?: number;
+}
+
+export interface LoteDetalleItem {
+  camisetaId: number;
+  nombreEquipo: string;
+  /** @nullable */
+  descripcion?: string | null;
+  /** @nullable */
+  urlImagen?: string | null;
+  talla: Talla;
+  cantidadInicial: number;
+  cantidadDisponible: number;
+  costoUnidad: number;
+}
+
+export interface LoteDetalle {
+  id: number;
+  proveedorId: number;
+  /** @nullable */
+  nombreProveedor?: string | null;
+  fechaIngreso: string;
+  tipoCompra: TipoCompra;
   costoTotal: number;
+  totalInicial: number;
+  totalDisponible: number;
+  totalVendido: number;
+  items: LoteDetalleItem[];
+}
+
+export interface ReportePdf {
+  /** Public CloudFront URL of the generated PDF. */
+  url: string;
+  /** S3 object key of the generated PDF. */
+  key: string;
 }
 
 export interface LoteUpdate {

@@ -11,6 +11,9 @@ export interface LoteInput {
   proveedorId: number;
   fechaIngreso: Date;
   tipoCompra: TipoCompra;
-  /** @minimum 0 */
-  costoTotal: number;
+  /**
+     * Optional starting cost. Defaults to 0 and accrues automatically as stock is added to the lote via inventario/ingreso.
+     * @minimum 0
+     */
+  costoTotal?: number;
 }

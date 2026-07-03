@@ -7,6 +7,7 @@ import {
   equiposTable,
   maletasTable,
   kardexTable,
+  lotesTable,
   ventasTable,
   ventaDetallesTable,
 } from "@workspace/db";
@@ -169,6 +170,7 @@ router.post("/inventario/ingreso", async (req: Request, res: Response) => {
       [row] = await tx
         .update(inventarioTable)
         .set({
+          cantidadInicial: current.cantidadInicial + data.cantidad,
           cantidadDisponible: current.cantidadDisponible + data.cantidad,
           costoUnidad: String(data.costoUnidad),
           precioVenta: String(data.precioVenta),
@@ -185,6 +187,7 @@ router.post("/inventario/ingreso", async (req: Request, res: Response) => {
           talla: data.talla,
           costoUnidad: String(data.costoUnidad),
           precioVenta: String(data.precioVenta),
+          cantidadInicial: data.cantidad,
           cantidadDisponible: data.cantidad,
         })
         .returning();
@@ -198,6 +201,15 @@ router.post("/inventario/ingreso", async (req: Request, res: Response) => {
       maletaId: data.maletaId,
       precioUnitario: String(data.costoUnidad),
     });
+
+    // The lote's accumulated purchase cost grows with every ingreso.
+    const costoIngreso = round2(data.costoUnidad * data.cantidad);
+    await tx
+      .update(lotesTable)
+      .set({
+        costoTotal: sql`${lotesTable.costoTotal} + ${costoIngreso}`,
+      })
+      .where(eq(lotesTable.id, data.loteId));
 
     return row;
   });

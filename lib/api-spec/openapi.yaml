@@ -489,6 +489,40 @@ paths:
           description: Eliminado
         "404":
           $ref: "#/components/responses/NotFound"
+  /lotes/{id}/detalle:
+    get:
+      operationId: getLoteDetalle
+      tags: [lotes]
+      summary: Detalle del lote — cantidades originales vs stock actual
+      description: Agrupa el inventario del lote por camiseta y talla, mostrando la cantidad inicial comprada frente al stock disponible. No incluye utilidad.
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Detalle del lote
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoteDetalle"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /lotes/{id}/reporte:
+    post:
+      operationId: generarReporteLote
+      tags: [lotes]
+      summary: Generar el PDF del reporte del lote (sin utilidad)
+      description: Genera un PDF con las cantidades originales vs stock actual del lote, lo almacena en S3 y devuelve su URL pública. Pensado para conversar con el proveedor.
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "201":
+          description: PDF generado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportePdf"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /inventario:
     get:
@@ -690,6 +724,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReporteVentaDiariaDetalle"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /reportes/ventas-diarias/{fecha}/pdf:
+    post:
+      operationId: generarReporteVentasDiariasPdf
+      tags: [reportes]
+      summary: Generar el PDF del reporte de ventas de un día (con utilidad)
+      description: Genera un PDF del reporte de ventas del día, lo almacena en S3 y devuelve su URL pública.
+      parameters:
+        - name: fecha
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Fecha en formato YYYY-MM-DD
+      responses:
+        "201":
+          description: PDF generado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportePdf"
         "422":
           $ref: "#/components/responses/ValidationError"
 
@@ -1007,7 +1063,7 @@ components:
           type: number
     LoteInput:
       type: object
-      required: [proveedorId, fechaIngreso, tipoCompra, costoTotal]
+      required: [proveedorId, fechaIngreso, tipoCompra]
       properties:
         proveedorId:
           type: integer
@@ -1019,6 +1075,68 @@ components:
         costoTotal:
           type: number
           minimum: 0
+          description: >-
+            Optional starting cost. Defaults to 0 and accrues automatically as
+            stock is added to the lote via inventario/ingreso.
+    LoteDetalleItem:
+      type: object
+      required:
+        [camisetaId, nombreEquipo, talla, cantidadInicial, cantidadDisponible, costoUnidad]
+      properties:
+        camisetaId:
+          type: integer
+        nombreEquipo:
+          type: string
+        descripcion:
+          type: ["string", "null"]
+        urlImagen:
+          type: ["string", "null"]
+        talla:
+          $ref: "#/components/schemas/Talla"
+        cantidadInicial:
+          type: integer
+        cantidadDisponible:
+          type: integer
+        costoUnidad:
+          type: number
+    LoteDetalle:
+      type: object
+      required:
+        [id, proveedorId, fechaIngreso, tipoCompra, costoTotal, totalInicial, totalDisponible, totalVendido, items]
+      properties:
+        id:
+          type: integer
+        proveedorId:
+          type: integer
+        nombreProveedor:
+          type: ["string", "null"]
+        fechaIngreso:
+          type: string
+          format: date
+        tipoCompra:
+          $ref: "#/components/schemas/TipoCompra"
+        costoTotal:
+          type: number
+        totalInicial:
+          type: integer
+        totalDisponible:
+          type: integer
+        totalVendido:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/LoteDetalleItem"
+    ReportePdf:
+      type: object
+      required: [url, key]
+      properties:
+        url:
+          type: string
+          description: Public CloudFront URL of the generated PDF.
+        key:
+          type: string
+          description: S3 object key of the generated PDF.
     LoteUpdate:
       type: object
       properties:

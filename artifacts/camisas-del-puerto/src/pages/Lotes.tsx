@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useListLotes,
@@ -34,7 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Boxes } from "lucide-react";
+import { Plus, Trash2, Boxes, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiErrorMessage, money, fmtDate } from "@/lib/format";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -42,6 +43,7 @@ import { useConfirm } from "@/components/confirm-dialog";
 
 export default function Lotes() {
   const qc = useQueryClient();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const confirm = useConfirm();
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
@@ -60,7 +62,6 @@ export default function Lotes() {
     new Date().toISOString().slice(0, 10),
   );
   const [tipoCompra, setTipoCompra] = useState<TipoCompra>("contado");
-  const [costoTotal, setCostoTotal] = useState("");
 
   const invalidate = () => qc.invalidateQueries();
 
@@ -68,19 +69,17 @@ export default function Lotes() {
     setProveedorId("");
     setFechaIngreso(new Date().toISOString().slice(0, 10));
     setTipoCompra("contado");
-    setCostoTotal("");
     setOpen(true);
   };
 
   const submit = () => {
-    if (!proveedorId || !costoTotal) return;
+    if (!proveedorId) return;
     create.mutate(
       {
         data: {
           proveedorId: Number(proveedorId),
           fechaIngreso,
           tipoCompra,
-          costoTotal: Number(costoTotal),
         },
       },
       {
@@ -178,17 +177,10 @@ export default function Lotes() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Costo total</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={costoTotal}
-                  onChange={(e) => setCostoTotal(e.target.value)}
-                  placeholder="0.00"
-                />
-              </div>
+              <p className="text-xs text-muted-foreground">
+                El costo total inicia en ₡0 y aumenta automáticamente cada vez que
+                ingresás camisetas a este lote.
+              </p>
             </div>
             <DialogFooter>
               <Button onClick={submit} disabled={create.isPending}>
@@ -225,12 +217,16 @@ export default function Lotes() {
                 <TableHead>Fecha</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead className="text-right">Costo total</TableHead>
-                <TableHead className="w-12"></TableHead>
+                <TableHead className="w-20"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {lotes.map((l) => (
-                <TableRow key={l.id}>
+                <TableRow
+                  key={l.id}
+                  className="cursor-pointer"
+                  onClick={() => navigate(`/lotes/${l.id}`)}
+                >
                   <TableCell className="font-medium">
                     {l.nombreProveedor}
                   </TableCell>
@@ -248,14 +244,20 @@ export default function Lotes() {
                     {money(l.costoTotal)}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive"
-                      onClick={() => del(l.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          del(l.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

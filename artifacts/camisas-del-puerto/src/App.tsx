@@ -10,6 +10,7 @@ import CamisetaDetalle from "@/pages/CamisetaDetalle";
 import Maletas from "@/pages/Maletas";
 import Exhibicion from "@/pages/Exhibicion";
 import Lotes from "@/pages/Lotes";
+import LoteDetalle from "@/pages/LoteDetalle";
 import Equipos from "@/pages/Equipos";
 import Proveedores from "@/pages/Proveedores";
 import Kardex from "@/pages/Kardex";
@@ -39,6 +40,7 @@ function Router() {
         <Route path="/maletas" component={Maletas} />
         <Route path="/exhibicion" component={Exhibicion} />
         <Route path="/lotes" component={Lotes} />
+        <Route path="/lotes/:id" component={LoteDetalle} />
         <Route path="/equipos" component={Equipos} />
         <Route path="/proveedores" component={Proveedores} />
         <Route path="/kardex" component={Kardex} />
